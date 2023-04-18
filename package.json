@@ -12,8 +12,11 @@
   "dependencies": {
     "@emotion/native": "^11.10.6",
     "@emotion/react": "^11.10.6",
+    "@react-navigation/bottom-tabs": "^6.5.7",
     "react": "18.2.0",
+    "react-devtools": "^4.27.4",
     "react-native": "0.71.6",
+    "react-native-vision-camera": "^2.15.4",
     "react-query": "^3.39.3"
   },
   "devDependencies": {
