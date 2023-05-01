@@ -28,9 +28,25 @@ const Top = styled.View`
   z-index: 9999;
   padding-left: 20px;
   padding-right: 20px;
-  Text {
-    color: ${colors.white};
-  }
+`;
+
+const Duration = styled.Text`
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: ${colors.white};
+  width: 50px;
+  height: 30px;
+  background-color: ${colors.purple_40};
+  padding: 5px;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  border-style: solid;
+  border-color: ${colors.purple_40};
+  border-width: 1px;
+  border-radius: 10px;
+  z-index: 9999;
 `;
 
 const Bottom = styled.View`
@@ -66,7 +82,7 @@ const Home = () => {
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const camera = useRef<Camera | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
-  const [duration, setDuration] = useState<number | null>(null);
+  const [duration, setDuration] = useState<string | null>(null);
 
   //카메라, 마이크 권한 부여 여부 확인
   useEffect(() => {
@@ -94,13 +110,28 @@ const Home = () => {
   useEffect(() => {
     let intervalId: number;
     if (isRecording) {
+      setDuration('00:00');
       intervalId = setInterval(() => {
         const now = new Date().getTime();
-        setDuration(Math.round((now - startTime) / 1000));
+        const duration = now - startTime;
+        if (duration >= 3600000) {
+          setDuration(
+            `${String(Math.floor((duration / (1000 * 60 * 60)) % 24))}:${String(
+              Math.floor((duration / (1000 * 60)) % 60),
+            ).padStart(2, '0')}`,
+          );
+        } else {
+          setDuration(
+            `${String(Math.floor((duration / (1000 * 60)) % 60)).padStart(
+              2,
+              '0',
+            )}:${String(Math.floor((duration / 1000) % 60)).padStart(2, '0')}`,
+          );
+        }
       }, 1000);
     }
     return () => clearInterval(intervalId);
-  }, [startTime]);
+  }, [isRecording]);
 
   const handleRecordingButton = async () => {
     if (isRecording) {
@@ -145,12 +176,13 @@ const Home = () => {
   }
   return (
     <Container>
-      <Top>
-        <Text>{duration}</Text>
-        <TouchableOpacity onPress={onFlipCameraPressed}>
-          <TopImage source={require('../assets/images/camera_flip.png')} />
-        </TouchableOpacity>
-      </Top>
+      {isRecording && <Duration>{duration}</Duration>}
+      <TouchableOpacity
+        onPress={onFlipCameraPressed}
+        style={{position: 'absolute', top: 20, right: 20, zIndex: 9999}}>
+        <TopImage source={require('../assets/images/camera_flip.png')} />
+      </TouchableOpacity>
+
       <Camera
         ref={camera}
         style={StyleSheet.absoluteFill}
