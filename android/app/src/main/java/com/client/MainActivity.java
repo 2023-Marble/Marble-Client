@@ -1,9 +1,12 @@
 package com.client;
 
+import android.os.Bundle;
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
+import com.rnfs.RNFSPackage;
+
 
 public class MainActivity extends ReactActivity {
 
@@ -32,4 +35,20 @@ public class MainActivity extends ReactActivity {
         DefaultNewArchitectureEntryPoint.getConcurrentReactEnabled() // concurrentRootEnabled
         );
   }
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(null);
+  }
+
+  // public class MainApplication extends Application implements ReactApplication {
+  //   // ...
+  //    @Override
+  //    protected List<ReactPackage> getPackages() {
+  //      return Arrays.<ReactPackage>asList(
+  //        new MainReactPackage(), // <---- add comma
+  //        new RNFSPackage() // <---------- add package
+  //      );
+  //    }
+  // }
 }

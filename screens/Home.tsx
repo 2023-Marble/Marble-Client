@@ -1,33 +1,20 @@
 import React, {useEffect, useState, useRef, useCallback} from 'react';
 import styled from '@emotion/native';
-import {StyleSheet, Text, TouchableOpacity, Image} from 'react-native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {StyleSheet, Text, TouchableOpacity} from 'react-native';
+import RNFS from 'react-native-fs';
+
 import {
   Camera,
   CameraPermissionStatus as PermissionStatus,
-  CameraDevice,
   useCameraDevices,
+  VideoFile,
 } from 'react-native-vision-camera';
 import colors from '../colors';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 const Container = styled.View`
   flex: 1;
   background-color: ${colors.white};
-`;
-
-const Top = styled.View`
-  position: absolute;
-  top: 0px;
-  left: 0;
-  width: 100%;
-  height: 10%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 9999;
-  padding-left: 20px;
-  padding-right: 20px;
 `;
 
 const Duration = styled.Text`
@@ -70,7 +57,9 @@ const TopImage = styled.Image`
   height: 25px;
 `;
 
-const Home = () => {
+const Home = ({
+  navigation: {navigate},
+}: NativeStackScreenProps<any, 'Mypage'>) => {
   const [cameraPermission, setCameraPermission] = useState<PermissionStatus>();
   const [microphonePermissionsion, setMicrophonePermission] =
     useState<PermissionStatus>();
@@ -133,6 +122,13 @@ const Home = () => {
     return () => clearInterval(intervalId);
   }, [isRecording]);
 
+  const handleRecordingFinished = async (video: VideoFile) => {
+    await RNFS.moveFile(
+      `/${video.path}`,
+      `${RNFS.PicturesDirectoryPath}/${new Date()}.mp4`,
+    );
+  };
+
   const handleRecordingButton = async () => {
     if (isRecording) {
       setDuration(null);
@@ -141,7 +137,7 @@ const Home = () => {
       setStartTime(new Date().getTime());
       await camera.current?.startRecording({
         flash: 'on',
-        onRecordingFinished: video => console.log(video),
+        onRecordingFinished: video => handleRecordingFinished(video),
         onRecordingError: error => console.error('startRecording:', error),
       });
     }
@@ -193,12 +189,15 @@ const Home = () => {
       />
       <Bottom>
         <TouchableOpacity onPress={handleRecordingButton}>
-          <BottomImage source={require('../assets/images/mypage_btn.png')} />
+          <BottomImage
+            source={require('../assets/images/camera_gallery.png')}
+            style={{width: 45, height: 45}}
+          />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleRecordingButton}>
           <BottomImage source={require('../assets/images/camera_btn.png')} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleRecordingButton}>
+        <TouchableOpacity onPress={() => navigate('Mypage')}>
           <BottomImage source={require('../assets/images/mypage_btn.png')} />
         </TouchableOpacity>
       </Bottom>
