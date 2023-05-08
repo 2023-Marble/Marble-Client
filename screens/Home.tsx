@@ -2,7 +2,6 @@ import React, {useEffect, useState, useRef, useCallback} from 'react';
 import styled from '@emotion/native';
 import {StyleSheet, Text, TouchableOpacity} from 'react-native';
 import RNFS from 'react-native-fs';
-
 import {
   Camera,
   CameraPermissionStatus as PermissionStatus,
@@ -64,7 +63,7 @@ const Home = ({
   const [microphonePermissionsion, setMicrophonePermission] =
     useState<PermissionStatus>();
   const [cameraPosition, setCameraPosition] = useState<'front' | 'back'>(
-    'back',
+    'front',
   );
   const devices = useCameraDevices();
   const device = devices[cameraPosition];
@@ -191,7 +190,7 @@ const Home = ({
         <TouchableOpacity onPress={handleRecordingButton}>
           <BottomImage
             source={require('../assets/images/camera_gallery.png')}
-            style={{width: 45, height: 45}}
+            style={{width: 45, height: 45, marginLeft: 15}}
           />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleRecordingButton}>
