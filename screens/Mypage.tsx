@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import styled from '@emotion/native';
 import colors from '../colors';
 import {View, Image, TouchableOpacity, FlatList} from 'react-native';
@@ -47,10 +47,11 @@ const WhiteBox = styled.View`
 `;
 
 const Title = styled.Text`
+  font-family: 'PretendardVariable';
   color: #000000;
   font-size: 17px;
   font-weight: 900;
-  line-height: 20px;
+  line-height: 23px;
 `;
 
 const OptionBox = styled.FlatList`
@@ -75,35 +76,65 @@ const RowView = styled.View`
   flex-direction: row;
 `;
 
-type OptionProps = {title: string; img: string};
-const Option = ({title, img}: OptionProps) => (
-  <TouchableOpacity
-    style={{
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    }}>
-    <RowView>
-      <Image
-        source={{uri: img}}
-        style={{width: 30, height: 30, marginRight: 10}}
-      />
-      <Text style={{fontSize: 20, lineHeight: 30, color: '#000000'}}>
-        {title}
-      </Text>
-    </RowView>
-    <Image
-      source={require(`../assets/images/check.png`)}
-      style={{width: 30, height: 30}}
-    />
-  </TouchableOpacity>
-);
+const DeleteCircle = styled.TouchableOpacity`
+  width: 20px;
+  height: 20px;
+  background-color: #ff3868;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 10px;
+  border-color: #ff3868;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  right: 0;
+`;
+
+type OptionProps = {
+  title: string;
+  img: string;
+  option: string;
+  setOption: React.Dispatch<React.SetStateAction<string>>;
+};
+const Option = ({title, img, option, setOption}: OptionProps) => {
+  return (
+    <TouchableOpacity
+      style={{
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}
+      onPress={() => setOption(title)}>
+      <RowView>
+        <Image
+          source={{uri: img}}
+          style={{width: 30, height: 30, marginRight: 10}}
+        />
+        <Text style={{fontSize: 20, lineHeight: 30, color: '#000000'}}>
+          {title}
+        </Text>
+      </RowView>
+      {option === title ? (
+        <Image
+          source={require(`../assets/images/check.png`)}
+          style={{width: 30, height: 30}}
+        />
+      ) : null}
+    </TouchableOpacity>
+  );
+};
 
 const Mypage = ({
   navigation: {navigate},
 }: NativeStackScreenProps<any, 'Home'>) => {
+  const [optionToggle, setOptionToggle] = useState<boolean>(false);
+  const [faceEditToggle, setFaceEditToggle] = useState<boolean>(false);
+  const [option, setOption] = useState<string>('기본');
+
   const optionData = [
     {
       id: 1,
@@ -140,6 +171,7 @@ const Mypage = ({
       img: 'https://img.freepik.com/free-psd/close-up-on-kid-expression-portrait_23-2150193262.jpg?w=740&t=st=1683521439~exp=1683522039~hmac=d13020e49927c1c88e9a189050509007f030aa99eeb7384cb362d1495b089785',
     },
   ];
+
   return (
     <Container>
       <Header>
@@ -187,23 +219,45 @@ const Mypage = ({
       <WhiteBox style={{height: 200, marginTop: 80}}>
         <RowView style={{justifyContent: 'space-between', marginBottom: 20}}>
           <Title>등록된 얼굴</Title>
-          <Image
-            source={require('../assets/images/pencil.png')}
-            style={{width: 17, height: 17}}
-          />
+          <TouchableOpacity onPress={() => setFaceEditToggle(!faceEditToggle)}>
+            {!faceEditToggle ? (
+              <Image
+                source={require('../assets/images/pencil.png')}
+                style={{width: 17, height: 17}}
+              />
+            ) : (
+              <Image
+                source={require('../assets/images/check.png')}
+                style={{width: 25, height: 17}}
+              />
+            )}
+          </TouchableOpacity>
         </RowView>
         <RowView>
           <FlatList
             data={faceData}
-            renderItem={({item}: any) => <FaceImage source={{uri: item.img}} />}
+            renderItem={({item}: any) => (
+              <View style={{position: 'relative'}}>
+                <FaceImage source={{uri: item.img}} />
+                {faceEditToggle ? (
+                  <DeleteCircle>
+                    <Text style={{color: `${colors.white}`, lineHeight: 17}}>
+                      ㅡ
+                    </Text>
+                  </DeleteCircle>
+                ) : null}
+              </View>
+            )}
             horizontal={true}
             ItemSeparatorComponent={() => <View style={{width: 10}} />}
-            ListFooterComponent={() => (
-              <Image
-                source={require('../assets/images/plus_circle.png')}
-                style={{marginLeft: 20}}
-              />
-            )}
+            ListFooterComponent={() =>
+              faceEditToggle ? (
+                <Image
+                  source={require('../assets/images/plus_circle.png')}
+                  style={{marginLeft: 20}}
+                />
+              ) : null
+            }
           />
         </RowView>
       </WhiteBox>
@@ -217,7 +271,9 @@ const Mypage = ({
           height: 70,
         }}>
         <Title>모자이크 설정</Title>
-        <View style={{display: 'flex', flexDirection: 'row'}}>
+        <TouchableOpacity
+          style={{display: 'flex', flexDirection: 'row'}}
+          onPress={() => setOptionToggle(!optionToggle)}>
           <Text
             style={{
               color: `${colors.purple_40}`,
@@ -230,26 +286,33 @@ const Mypage = ({
             source={require('../assets/images/right_arrow.png')}
             style={{width: 9, height: 18, marginLeft: 10}}
           />
-        </View>
+        </TouchableOpacity>
       </WhiteBox>
-      <WhiteBox style={{marginTop: 20}}>
-        <OptionBox
-          data={optionData}
-          renderItem={({item}: any) => (
-            <Option title={item.title} img={item.img} />
-          )}
-          ItemSeparatorComponent={() => <View style={{height: 10}} />}
-        />
-        <RowView style={{marginTop: 10}}>
-          <Image
-            source={require('../assets/images/plus.png')}
-            style={{width: 30, height: 30, marginRight: 10}}
+      {optionToggle && (
+        <WhiteBox style={{marginTop: 20}}>
+          <OptionBox
+            data={optionData}
+            renderItem={({item}: any) => (
+              <Option
+                title={item.title}
+                img={item.img}
+                option={option}
+                setOption={setOption}
+              />
+            )}
+            ItemSeparatorComponent={() => <View style={{height: 10}} />}
           />
-          <Text style={{fontSize: 20, color: `${colors.purple_40}`}}>
-            추가하기
-          </Text>
-        </RowView>
-      </WhiteBox>
+          <RowView style={{marginTop: 10}}>
+            <Image
+              source={require('../assets/images/plus.png')}
+              style={{width: 30, height: 30, marginRight: 10}}
+            />
+            <Text style={{fontSize: 20, color: `${colors.purple_40}`}}>
+              추가하기
+            </Text>
+          </RowView>
+        </WhiteBox>
+      )}
     </Container>
   );
 };
