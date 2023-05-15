@@ -6,10 +6,10 @@ import {
   Camera,
   CameraPermissionStatus as PermissionStatus,
   useCameraDevices,
-  VideoFile,
 } from 'react-native-vision-camera';
 import colors from '../colors';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {CameraRoll} from '@react-native-camera-roll/camera-roll';
 
 const Container = styled.View`
   flex: 1;
@@ -121,13 +121,7 @@ const Home = ({
     return () => clearInterval(intervalId);
   }, [isRecording]);
 
-  const handleRecordingFinished = async (video: VideoFile) => {
-    await RNFS.moveFile(
-      `/${video.path}`,
-      `${RNFS.PicturesDirectoryPath}/${new Date()}.mp4`,
-    );
-  };
-
+  // 녹화 시작, 중단 
   const handleRecordingButton = async () => {
     if (isRecording) {
       setDuration(null);
@@ -136,13 +130,15 @@ const Home = ({
       setStartTime(new Date().getTime());
       await camera.current?.startRecording({
         flash: 'on',
-        onRecordingFinished: video => handleRecordingFinished(video),
+        onRecordingFinished: video =>
+          CameraRoll.save(video.path, {type: 'video', album: 'Marble'}),
         onRecordingError: error => console.error('startRecording:', error),
       });
     }
     setIsRecording(!isRecording);
   };
 
+  //화면 전환
   const onFlipCameraPressed = useCallback(() => {
     setCameraPosition(p => (p === 'back' ? 'front' : 'back'));
   }, []);

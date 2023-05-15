@@ -1,8 +1,9 @@
 import React, {useState} from 'react';
 import styled from '@emotion/native';
 import colors from '../colors';
-import {View, Image, TouchableOpacity, FlatList} from 'react-native';
+import {View, Image, TouchableOpacity, FlatList, Pressable} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import ImagePickModal from '../components/ImagePickModal';
 
 const Container = styled.View`
   flex: 1;
@@ -94,7 +95,7 @@ const DeleteCircle = styled.TouchableOpacity`
 
 type OptionProps = {
   title: string;
-  img: string;
+  img: any;
   option: string;
   setOption: React.Dispatch<React.SetStateAction<string>>;
 };
@@ -110,10 +111,7 @@ const Option = ({title, img, option, setOption}: OptionProps) => {
       }}
       onPress={() => setOption(title)}>
       <RowView>
-        <Image
-          source={{uri: img}}
-          style={{width: 30, height: 30, marginRight: 10}}
-        />
+        <Image source={img} style={{width: 30, height: 30, marginRight: 10}} />
         <Text style={{fontSize: 20, lineHeight: 30, color: '#000000'}}>
           {title}
         </Text>
@@ -134,22 +132,23 @@ const Mypage = ({
   const [optionToggle, setOptionToggle] = useState<boolean>(false);
   const [faceEditToggle, setFaceEditToggle] = useState<boolean>(false);
   const [option, setOption] = useState<string>('기본');
+  const [modalToggle, setModalToggle] = useState<boolean>(false);
 
   const optionData = [
     {
       id: 1,
       title: '기본',
-      img: 'https://img.freepik.com/free-vector/white-abstract-background_23-2147782582.jpg?w=740&t=st=1683524314~exp=1683524914~hmac=848da941776a19b444ba69e7cb81aa6b8e654005ce63b3ae95aab081c145c4ee',
+      img: require('../assets/images/mozaic.png'),
     },
     {
       id: 2,
       title: '블러',
-      img: 'https://img.freepik.com/free-vector/drop_53876-59938.jpg?w=740&t=st=1683524648~exp=1683525248~hmac=eaa3c5b0b07376c8ad569644cc7e890f0fcf741fc6593af3baa0edf5e4f1c16f',
+      img: require('../assets/images/blur.png'),
     },
     {
       id: 3,
       title: '표정',
-      img: 'https://cdn.icon-icons.com/icons2/2716/PNG/512/smiley_icon_172891.png',
+      img: require('../assets/images/smile.png'),
     },
   ];
 
@@ -174,6 +173,7 @@ const Mypage = ({
 
   return (
     <Container>
+      <ImagePickModal toggle={modalToggle} setToggle={setModalToggle}/>
       <Header>
         <RowView
           style={{
@@ -252,10 +252,12 @@ const Mypage = ({
             ItemSeparatorComponent={() => <View style={{width: 10}} />}
             ListFooterComponent={() =>
               faceEditToggle ? (
-                <Image
-                  source={require('../assets/images/plus_circle.png')}
-                  style={{marginLeft: 20}}
-                />
+                <Pressable onPress={() => setModalToggle(!modalToggle)}>
+                  <Image
+                    source={require('../assets/images/plus_circle.png')}
+                    style={{marginLeft: 20}}
+                  />
+                </Pressable>
               ) : null
             }
           />
