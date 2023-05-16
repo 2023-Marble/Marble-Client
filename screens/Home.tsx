@@ -1,7 +1,6 @@
 import React, {useEffect, useState, useRef, useCallback} from 'react';
 import styled from '@emotion/native';
 import {StyleSheet, Text, TouchableOpacity} from 'react-native';
-import RNFS from 'react-native-fs';
 import {
   Camera,
   CameraPermissionStatus as PermissionStatus,
