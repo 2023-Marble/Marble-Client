@@ -7,13 +7,31 @@ import colors from '../colors';
 type props = {
   toggle: boolean;
   setToggle: React.Dispatch<React.SetStateAction<boolean>>;
+  setFaceTemp: React.Dispatch<React.SetStateAction<any[]>>;
+  faceTemp: any[];
 };
-const ImagePickModal = ({toggle, setToggle}: props) => {
-  const handleImagePicker = (type: string) => {
+const ImagePickModal = ({toggle, setToggle, setFaceTemp, faceTemp}: props) => {
+  const handleImagePicker = async (type: string) => {
     if (type === 'library') {
-      launchImageLibrary({mediaType: 'photo'});
+      await launchImageLibrary(
+        {mediaType: 'photo'},
+        (res: any) =>
+        res?.assets &&
+          setFaceTemp([
+            ...faceTemp,
+            {id: `${faceTemp.length}`, img: res?.assets[0]?.uri},
+          ]),
+      );
     } else {
-      launchCamera({mediaType: 'photo'});
+      await launchCamera(
+        {mediaType: 'photo'},
+        (res: any) =>
+          res?.assets &&
+          setFaceTemp([
+            ...faceTemp,
+            {id: `${faceTemp.length}`, img: res.assets[0]?.uri},
+          ]),
+      );
     }
   };
 

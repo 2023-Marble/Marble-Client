@@ -6,7 +6,7 @@ import Login from './screens/Login';
 import Stack from './navigation/Stack';
 
 export default function App() {
-  const [isLogin, setIsLogin] = useState<boolean>(false);
+  const [isLogin, setIsLogin] = useState<boolean>(true);
   const queryClient = new QueryClient();
   return (
     <QueryClientProvider client={queryClient}>

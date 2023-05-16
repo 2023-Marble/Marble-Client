@@ -89,8 +89,8 @@ const DeleteCircle = styled.TouchableOpacity`
   justify-content: center;
   align-items: center;
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 5px;
+  right: 5px;
 `;
 
 type OptionProps = {
@@ -133,6 +133,7 @@ const Mypage = ({
   const [faceEditToggle, setFaceEditToggle] = useState<boolean>(false);
   const [option, setOption] = useState<string>('기본');
   const [modalToggle, setModalToggle] = useState<boolean>(false);
+  const [faceTemp, setFaceTemp] = useState<any[]>([]);
 
   const optionData = [
     {
@@ -154,26 +155,32 @@ const Mypage = ({
 
   const faceData = [
     {
-      id: 1,
+      id: 12342,
       img: 'https://img.freepik.com/free-psd/close-up-on-kid-expression-portrait_23-2150193262.jpg?w=740&t=st=1683521439~exp=1683522039~hmac=d13020e49927c1c88e9a189050509007f030aa99eeb7384cb362d1495b089785',
     },
     {
-      id: 2,
+      id: 2123,
       img: 'https://img.freepik.com/free-psd/close-up-on-kid-expression-portrait_23-2150193262.jpg?w=740&t=st=1683521439~exp=1683522039~hmac=d13020e49927c1c88e9a189050509007f030aa99eeb7384cb362d1495b089785',
     },
     {
-      id: 3,
+      id: 3234,
       img: 'https://img.freepik.com/free-psd/close-up-on-kid-expression-portrait_23-2150193262.jpg?w=740&t=st=1683521439~exp=1683522039~hmac=d13020e49927c1c88e9a189050509007f030aa99eeb7384cb362d1495b089785',
     },
     {
-      id: 4,
+      id: 4123,
       img: 'https://img.freepik.com/free-psd/close-up-on-kid-expression-portrait_23-2150193262.jpg?w=740&t=st=1683521439~exp=1683522039~hmac=d13020e49927c1c88e9a189050509007f030aa99eeb7384cb362d1495b089785',
     },
+    ...faceTemp
   ];
 
   return (
     <Container>
-      <ImagePickModal toggle={modalToggle} setToggle={setModalToggle}/>
+      <ImagePickModal
+        toggle={modalToggle}
+        setToggle={setModalToggle}
+        setFaceTemp={setFaceTemp}
+        faceTemp={faceTemp}
+      />
       <Header>
         <RowView
           style={{
