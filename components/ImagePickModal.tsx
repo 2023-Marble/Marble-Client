@@ -10,40 +10,41 @@ import {useQueryClient, useMutation} from 'react-query';
 type props = {
   toggle: boolean;
   setToggle: React.Dispatch<React.SetStateAction<boolean>>;
-
+  mode: string;
 };
-const ImagePickModal = ({toggle, setToggle}: props) => {
+const ImagePickModal = ({toggle, setToggle, mode}: props) => {
+  const token =
+    'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Implb25nZXVuQGdtYWlsLmNvbSIsImlhdCI6MTY4NzcwNDM4NywiZXhwIjoxNjg3NzA3OTg3fQ.NMsgLH4jvnsA8q8RWd4d3KksvdIqRyw_81C9LPs0Vmc';
   const queryClient = useQueryClient();
   //api 호출
-  const addFaceData = async (url: string) => {
+  const addUserData = async (url: string) => {
     const res = await axios.post(
-      `${API_URL}image`,
+      `${API_URL}${mode}`,
       {
         url: url,
       },
       {
         headers: {
-          Authorization:
-            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Implb25nZXVuQGdtYWlsLmNvbSIsImlhdCI6MTY4NzY5MDA0MCwiZXhwIjoxNjg3NjkzNjQwfQ.XQR8whlPv7AkSxg42Wifj4GWwz99rtQw7gBm472ZHt8',
+          Authorization: token,
         },
       },
     );
     return res.data;
   };
 
-  const {mutate} = useMutation((url: string) => addFaceData(url), {
+  const {mutate} = useMutation((url: string) => addUserData(url), {
     onSuccess: () => {
-      queryClient.invalidateQueries('faceData');
+      queryClient.invalidateQueries('userData');
     },
     onError: error => console.log(error),
   });
 
   const handleImagePicker = async (type: string) => {
-    if (type === 'library') {
+    if (type === 'library')
       await launchImageLibrary({mediaType: 'photo'}, async (res: any) => {
         res?.assets && mutate(res?.assets[0]?.uri);
       });
-    } else {
+    else {
       await launchCamera({mediaType: 'photo'}, async (res: any) => {
         res?.assets && mutate(res?.assets[0]?.uri);
       });
