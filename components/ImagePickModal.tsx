@@ -5,15 +5,15 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import colors from '../colors';
 import axios from 'axios';
 import {API_URL} from '../api';
-import {useMutation} from 'react-query';
+import {useQueryClient, useMutation} from 'react-query';
 
 type props = {
   toggle: boolean;
   setToggle: React.Dispatch<React.SetStateAction<boolean>>;
-  setFaceData: React.Dispatch<React.SetStateAction<Object[]>>;
-  faceData: any[];
+
 };
-const ImagePickModal = ({toggle, setToggle, setFaceData, faceData}: props) => {
+const ImagePickModal = ({toggle, setToggle}: props) => {
+  const queryClient = useQueryClient();
   //api 호출
   const addFaceData = async (url: string) => {
     const res = await axios.post(
@@ -24,7 +24,7 @@ const ImagePickModal = ({toggle, setToggle, setFaceData, faceData}: props) => {
       {
         headers: {
           Authorization:
-            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Implb25nZXVuQGdtYWlsLmNvbSIsImlhdCI6MTY4NzY4NTYyMCwiZXhwIjoxNjg3Njg5MjIwfQ.KjRygsiaeq0t-eaDu7OA9LZYpmPlWjYTeBsV-qYFw1o',
+            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Implb25nZXVuQGdtYWlsLmNvbSIsImlhdCI6MTY4NzY5MDA0MCwiZXhwIjoxNjg3NjkzNjQwfQ.XQR8whlPv7AkSxg42Wifj4GWwz99rtQw7gBm472ZHt8',
         },
       },
     );
@@ -32,10 +32,8 @@ const ImagePickModal = ({toggle, setToggle, setFaceData, faceData}: props) => {
   };
 
   const {mutate} = useMutation((url: string) => addFaceData(url), {
-    onSuccess: (data: any) => {
-      let temp = [...faceData];
-      temp.push(data);
-      setFaceData(temp);
+    onSuccess: () => {
+      queryClient.invalidateQueries('faceData');
     },
     onError: error => console.log(error),
   });

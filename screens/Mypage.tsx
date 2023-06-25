@@ -1,19 +1,13 @@
 import React, {useState, useEffect} from 'react';
 import styled from '@emotion/native';
 import colors from '../colors';
-import {
-  View,
-  Image,
-  TouchableOpacity,
-  FlatList,
-  Pressable,
-  GestureResponderEvent,
-} from 'react-native';
+import {View, Image, TouchableOpacity, FlatList, Pressable} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import ImagePickModal from '../components/ImagePickModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {API_URL} from '../api';
+import {useMutation, useQuery, useQueryClient} from 'react-query';
 
 const Container = styled.View`
   flex: 1;
@@ -139,24 +133,46 @@ const Option = ({title, img, option, setOption}: OptionProps) => {
 const Mypage = ({
   navigation: {navigate},
 }: NativeStackScreenProps<any, 'Home'>) => {
+  const queryClient = useQueryClient();
+
   const [optionToggle, setOptionToggle] = useState<boolean>(false);
   const [faceEditToggle, setFaceEditToggle] = useState<boolean>(false);
   const [option, setOption] = useState<string>('기본');
   const [modalToggle, setModalToggle] = useState<boolean>(false);
-  const [faceData, setFaceData] = useState<Array<Object>>([]);
 
+  const token =
+    'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Implb25nZXVuQGdtYWlsLmNvbSIsImlhdCI6MTY4NzY5MDA0MCwiZXhwIjoxNjg3NjkzNjQwfQ.XQR8whlPv7AkSxg42Wifj4GWwz99rtQw7gBm472ZHt8';
+
+  //api
   const getFaceData = async () => {
     const res = await axios.get(`${API_URL}user`, {
       headers: {
-        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Implb25nZXVuQGdtYWlsLmNvbSIsImlhdCI6MTY4NzY4NTYyMCwiZXhwIjoxNjg3Njg5MjIwfQ.KjRygsiaeq0t-eaDu7OA9LZYpmPlWjYTeBsV-qYFw1o`,
+        Authorization: token,
       },
     });
-    setFaceData(res.data.images);
+
+    return res.data.images;
+  };
+  const deleteFaceData = async (id: number) => {
+    const res = await axios.delete(`${API_URL}image/${id}`, {
+      headers: {
+        Authorization: token,
+      },
+    });
   };
 
-  useEffect(() => {
-    getFaceData();
+  const {data: faceData} = useQuery('faceData', getFaceData, {
+    refetchOnWindowFocus: false,
+    onError: error => console.log(error),
+  });
+  const {mutate} = useMutation((id: number) => deleteFaceData(id), {
+    onSuccess: () => {
+      queryClient.invalidateQueries('faceData');
+    },
+    onError: error => console.log(error),
+  });
 
+  useEffect(() => {
     const getOption = async () => {
       const value = await AsyncStorage.getItem('@option');
       value !== null ? setOption(value) : null;
@@ -189,21 +205,9 @@ const Mypage = ({
     },
   ];
 
-  const handleDeleteFace = async (item: Object) => {
-    const temp = [...faceData];
-    const index = temp.indexOf(item);
-    temp.splice(index, 1);
-    setFaceData(temp);
-    await AsyncStorage.setItem('@face', JSON.stringify(faceData));
-  };
   return (
     <Container>
-      <ImagePickModal
-        toggle={modalToggle}
-        setToggle={setModalToggle}
-        setFaceData={setFaceData}
-        faceData={faceData}
-      />
+      <ImagePickModal toggle={modalToggle} setToggle={setModalToggle} />
       <Header>
         <RowView
           style={{
@@ -270,7 +274,7 @@ const Mypage = ({
               <View style={{position: 'relative'}}>
                 <FaceImage source={{uri: item.url}} />
                 {faceEditToggle ? (
-                  <DeleteCircle onPress={() => handleDeleteFace(item)}>
+                  <DeleteCircle onPress={() => mutate(item.imageId)}>
                     <Text style={{color: `${colors.white}`, lineHeight: 17}}>
                       ㅡ
                     </Text>
