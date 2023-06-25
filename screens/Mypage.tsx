@@ -1,9 +1,19 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import styled from '@emotion/native';
 import colors from '../colors';
-import {View, Image, TouchableOpacity, FlatList, Pressable} from 'react-native';
+import {
+  View,
+  Image,
+  TouchableOpacity,
+  FlatList,
+  Pressable,
+  GestureResponderEvent,
+} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import ImagePickModal from '../components/ImagePickModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import {API_URL} from '../api';
 
 const Container = styled.View`
   flex: 1;
@@ -133,7 +143,33 @@ const Mypage = ({
   const [faceEditToggle, setFaceEditToggle] = useState<boolean>(false);
   const [option, setOption] = useState<string>('기본');
   const [modalToggle, setModalToggle] = useState<boolean>(false);
-  const [faceTemp, setFaceTemp] = useState<any[]>([]);
+  const [faceData, setFaceData] = useState<Array<Object>>([]);
+
+  const getFaceData = async () => {
+    const res = await axios.get(`${API_URL}user`, {
+      headers: {
+        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Implb25nZXVuQGdtYWlsLmNvbSIsImlhdCI6MTY4NzY4NTYyMCwiZXhwIjoxNjg3Njg5MjIwfQ.KjRygsiaeq0t-eaDu7OA9LZYpmPlWjYTeBsV-qYFw1o`,
+      },
+    });
+    setFaceData(res.data.images);
+  };
+
+  useEffect(() => {
+    getFaceData();
+
+    const getOption = async () => {
+      const value = await AsyncStorage.getItem('@option');
+      value !== null ? setOption(value) : null;
+    };
+    getOption();
+  }, []);
+
+  useEffect(() => {
+    const saveOption = async () => {
+      await AsyncStorage.setItem('@option', option);
+    };
+    saveOption();
+  }, [option]);
 
   const optionData = [
     {
@@ -153,33 +189,20 @@ const Mypage = ({
     },
   ];
 
-  const faceData = [
-    {
-      id: 12342,
-      img: 'https://img.freepik.com/free-psd/close-up-on-kid-expression-portrait_23-2150193262.jpg?w=740&t=st=1683521439~exp=1683522039~hmac=d13020e49927c1c88e9a189050509007f030aa99eeb7384cb362d1495b089785',
-    },
-    {
-      id: 2123,
-      img: 'https://img.freepik.com/free-psd/close-up-on-kid-expression-portrait_23-2150193262.jpg?w=740&t=st=1683521439~exp=1683522039~hmac=d13020e49927c1c88e9a189050509007f030aa99eeb7384cb362d1495b089785',
-    },
-    {
-      id: 3234,
-      img: 'https://img.freepik.com/free-psd/close-up-on-kid-expression-portrait_23-2150193262.jpg?w=740&t=st=1683521439~exp=1683522039~hmac=d13020e49927c1c88e9a189050509007f030aa99eeb7384cb362d1495b089785',
-    },
-    {
-      id: 4123,
-      img: 'https://img.freepik.com/free-psd/close-up-on-kid-expression-portrait_23-2150193262.jpg?w=740&t=st=1683521439~exp=1683522039~hmac=d13020e49927c1c88e9a189050509007f030aa99eeb7384cb362d1495b089785',
-    },
-    ...faceTemp
-  ];
-
+  const handleDeleteFace = async (item: Object) => {
+    const temp = [...faceData];
+    const index = temp.indexOf(item);
+    temp.splice(index, 1);
+    setFaceData(temp);
+    await AsyncStorage.setItem('@face', JSON.stringify(faceData));
+  };
   return (
     <Container>
       <ImagePickModal
         toggle={modalToggle}
         setToggle={setModalToggle}
-        setFaceTemp={setFaceTemp}
-        faceTemp={faceTemp}
+        setFaceData={setFaceData}
+        faceData={faceData}
       />
       <Header>
         <RowView
@@ -243,11 +266,11 @@ const Mypage = ({
         <RowView>
           <FlatList
             data={faceData}
-            renderItem={({item}: any) => (
+            renderItem={({item, key}: any) => (
               <View style={{position: 'relative'}}>
-                <FaceImage source={{uri: item.img}} />
+                <FaceImage source={{uri: item.url}} />
                 {faceEditToggle ? (
-                  <DeleteCircle>
+                  <DeleteCircle onPress={() => handleDeleteFace(item)}>
                     <Text style={{color: `${colors.white}`, lineHeight: 17}}>
                       ㅡ
                     </Text>

@@ -3,35 +3,52 @@ import {Modal, View} from 'react-native';
 import styled from '@emotion/native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import colors from '../colors';
+import axios from 'axios';
+import {API_URL} from '../api';
+import {useMutation} from 'react-query';
 
 type props = {
   toggle: boolean;
   setToggle: React.Dispatch<React.SetStateAction<boolean>>;
-  setFaceTemp: React.Dispatch<React.SetStateAction<any[]>>;
-  faceTemp: any[];
+  setFaceData: React.Dispatch<React.SetStateAction<Object[]>>;
+  faceData: any[];
 };
-const ImagePickModal = ({toggle, setToggle, setFaceTemp, faceTemp}: props) => {
+const ImagePickModal = ({toggle, setToggle, setFaceData, faceData}: props) => {
+  //api 호출
+  const addFaceData = async (url: string) => {
+    const res = await axios.post(
+      `${API_URL}image`,
+      {
+        url: url,
+      },
+      {
+        headers: {
+          Authorization:
+            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Implb25nZXVuQGdtYWlsLmNvbSIsImlhdCI6MTY4NzY4NTYyMCwiZXhwIjoxNjg3Njg5MjIwfQ.KjRygsiaeq0t-eaDu7OA9LZYpmPlWjYTeBsV-qYFw1o',
+        },
+      },
+    );
+    return res.data;
+  };
+
+  const {mutate} = useMutation((url: string) => addFaceData(url), {
+    onSuccess: (data: any) => {
+      let temp = [...faceData];
+      temp.push(data);
+      setFaceData(temp);
+    },
+    onError: error => console.log(error),
+  });
+
   const handleImagePicker = async (type: string) => {
     if (type === 'library') {
-      await launchImageLibrary(
-        {mediaType: 'photo'},
-        (res: any) =>
-        res?.assets &&
-          setFaceTemp([
-            ...faceTemp,
-            {id: `${faceTemp.length}`, img: res?.assets[0]?.uri},
-          ]),
-      );
+      await launchImageLibrary({mediaType: 'photo'}, async (res: any) => {
+        res?.assets && mutate(res?.assets[0]?.uri);
+      });
     } else {
-      await launchCamera(
-        {mediaType: 'photo'},
-        (res: any) =>
-          res?.assets &&
-          setFaceTemp([
-            ...faceTemp,
-            {id: `${faceTemp.length}`, img: res.assets[0]?.uri},
-          ]),
-      );
+      await launchCamera({mediaType: 'photo'}, async (res: any) => {
+        res?.assets && mutate(res?.assets[0]?.uri);
+      });
     }
   };
 
