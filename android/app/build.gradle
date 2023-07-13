@@ -178,8 +178,12 @@ dependencies {
     implementation("androidx.camera:camera-extensions:${camerax_version}")
     implementation ("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.0")
 
+    implementation 'com.google.mlkit:face-detection:16.1.5'
+
     implementation platform('com.google.firebase:firebase-bom:32.1.1')
     implementation 'com.google.firebase:firebase-analytics-ktx'
+
+    implementation "com.google.guava:guava:31.0.1-android"
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}")
     debugImplementation("com.facebook.flipper:flipper-network-plugin:${FLIPPER_VERSION}") {

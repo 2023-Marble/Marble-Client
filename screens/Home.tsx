@@ -1,18 +1,20 @@
 import React, {useEffect, useState, useRef, useCallback} from 'react';
 import styled from '@emotion/native';
-import {StyleSheet, Text, TouchableOpacity} from 'react-native';
+import {StyleSheet, Text, TouchableOpacity, NativeModules} from 'react-native';
 import {
   Camera,
   CameraPermissionStatus as PermissionStatus,
   useCameraDevices,
+  useCameraFormat,
 } from 'react-native-vision-camera';
 import colors from '../colors';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {CameraRoll} from '@react-native-camera-roll/camera-roll';
+import CameraView from '../components/CameraView';
 
 const Container = styled.View`
   flex: 1;
   background-color: ${colors.white};
+  position: relative;
 `;
 
 const Duration = styled.Text`
@@ -66,10 +68,12 @@ const Home = ({
   );
   const devices = useCameraDevices();
   const device = devices[cameraPosition];
+  const format = useCameraFormat(device);
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const camera = useRef<Camera | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
   const [duration, setDuration] = useState<string | null>(null);
+  //const {CameraView}=NativeModules;
 
   //카메라, 마이크 권한 부여 여부 확인
   useEffect(() => {
@@ -120,21 +124,23 @@ const Home = ({
     return () => clearInterval(intervalId);
   }, [isRecording]);
 
-  // 녹화 시작, 중단 
+  // 녹화 시작, 중단
   const handleRecordingButton = async () => {
-    if (isRecording) {
-      setDuration(null);
-      await camera.current?.stopRecording();
-    } else {
-      setStartTime(new Date().getTime());
-      await camera.current?.startRecording({
-        flash: 'on',
-        onRecordingFinished: video =>
-          CameraRoll.save(video.path, {type: 'video', album: 'Marble'}),
-        onRecordingError: error => console.error('startRecording:', error),
-      });
-    }
-    setIsRecording(!isRecording);
+    // if (isRecording) {
+    //   setDuration(null);
+    //   await camera.current?.stopRecording();
+    // } else {
+    //   setStartTime(new Date().getTime());
+    //   await camera.current?.startRecording({
+    //     flash: 'on',
+    //     onRecordingFinished: (video: any) =>
+    //       CameraRoll.save(video.path, {type: 'video', album: 'Marble'}),
+    //     onRecordingError: (error: any) =>
+    //       console.error('startRecording:', error),
+    //   });
+    // }
+    // setIsRecording(!isRecording);
+    //CameraView.captureVideo();
   };
 
   //화면 전환
@@ -142,7 +148,7 @@ const Home = ({
     setCameraPosition(p => (p === 'back' ? 'front' : 'back'));
   }, []);
 
-  console.log(device?.devices);
+  console.log(device?.supportsParallelVideoProcessing);
   if (cameraPermission !== 'authorized') {
     return (
       <Container>
@@ -172,29 +178,20 @@ const Home = ({
         style={{position: 'absolute', top: 20, right: 20, zIndex: 9999}}>
         <TopImage source={require('../assets/images/camera_flip.png')} />
       </TouchableOpacity>
-
-      <Camera
-        ref={camera}
-        style={StyleSheet.absoluteFill}
-        device={device}
-        isActive={true}
-        video={true}
-        audio={true}
-      />
-      <Bottom>
-        <TouchableOpacity onPress={handleRecordingButton}>
-          <BottomImage
-            source={require('../assets/images/camera_gallery.png')}
-            style={{width: 45, height: 45, marginLeft: 15}}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleRecordingButton}>
-          <BottomImage source={require('../assets/images/camera_btn.png')} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigate('Mypage')}>
-          <BottomImage source={require('../assets/images/mypage_btn.png')} />
-        </TouchableOpacity>
-      </Bottom>
+      <TouchableOpacity
+        onPress={handleRecordingButton}
+        style={{zIndex: 9999, position: 'absolute', bottom: 20, left: 30}}>
+        <BottomImage
+          source={require('../assets/images/camera_gallery.png')}
+          style={{width: 45, height: 45, marginLeft: 15}}
+        />
+      </TouchableOpacity>
+      <CameraView style={{width: '100%', height: '100%'}} />
+      <TouchableOpacity
+        onPress={() => navigate('Mypage')}
+        style={{zIndex: 9999, position: 'absolute', bottom: 12, right: 40}}>
+        <BottomImage source={require('../assets/images/mypage_btn.png')} />
+      </TouchableOpacity>
     </Container>
   );
 };
