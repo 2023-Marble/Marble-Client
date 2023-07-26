@@ -124,29 +124,6 @@ const Home = ({
     return () => clearInterval(intervalId);
   }, [isRecording]);
 
-  // 녹화 시작, 중단
-  const handleRecordingButton = async () => {
-    // if (isRecording) {
-    //   setDuration(null);
-    //   await camera.current?.stopRecording();
-    // } else {
-    //   setStartTime(new Date().getTime());
-    //   await camera.current?.startRecording({
-    //     flash: 'on',
-    //     onRecordingFinished: (video: any) =>
-    //       CameraRoll.save(video.path, {type: 'video', album: 'Marble'}),
-    //     onRecordingError: (error: any) =>
-    //       console.error('startRecording:', error),
-    //   });
-    // }
-    // setIsRecording(!isRecording);
-    //CameraView.captureVideo();
-  };
-
-  //화면 전환
-  const onFlipCameraPressed = useCallback(() => {
-    setCameraPosition(p => (p === 'back' ? 'front' : 'back'));
-  }, []);
 
   console.log(device?.supportsParallelVideoProcessing);
   if (cameraPermission !== 'authorized') {
@@ -173,19 +150,14 @@ const Home = ({
   return (
     <Container>
       {isRecording && <Duration>{duration}</Duration>}
-      <TouchableOpacity
-        onPress={onFlipCameraPressed}
-        style={{position: 'absolute', top: 20, right: 20, zIndex: 9999}}>
-        <TopImage source={require('../assets/images/camera_flip.png')} />
-      </TouchableOpacity>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={handleRecordingButton}
         style={{zIndex: 9999, position: 'absolute', bottom: 20, left: 30}}>
         <BottomImage
           source={require('../assets/images/camera_gallery.png')}
           style={{width: 45, height: 45, marginLeft: 15}}
         />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <CameraView style={{width: '100%', height: '100%'}} />
       <TouchableOpacity
         onPress={() => navigate('Mypage')}

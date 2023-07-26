@@ -1,16 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="bottom">
 
-    <androidx.camera.view.PreviewView
-        android:id="@+id/camera_view"
+<!--    <androidx.camera.view.PreviewView-->
+<!--        android:id="@+id/camera_view"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="651dp">-->
+<!--    </androidx.camera.view.PreviewView>-->
+<!--    <com.client.GraphicOverlay-->
+<!--        android:id="@+id/graphic_overlay"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        />-->
+    <com.otaliastudios.cameraview.CameraView
+        android:id="@+id/camera"
+        android:keepScreenOn="true"
         android:layout_width="match_parent"
-        android:layout_height="651dp">
-
-    </androidx.camera.view.PreviewView>
+        android:layout_height="651dp"
+        app:cameraEngine="camera1"
+        app:cameraPreview="glSurface">
+            <com.client.GraphicOverlay
+                android:id="@+id/graphic_overlay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_drawOnPictureSnapshot="false"
+                app:layout_drawOnPreview="true"
+                app:layout_drawOnVideoSnapshot="true"
+                android:backgroundTint="#aabbcc"
+                />
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            app:layout_drawOnPictureSnapshot="false"
+            app:layout_drawOnPreview="true"
+            app:layout_drawOnVideoSnapshot="true"
+            app:srcCompat="@drawable/camera_gallery"/>
+    </com.otaliastudios.cameraview.CameraView>
+    <ImageButton
+        android:id="@+id/flip_button"
+        android:layout_width="60dp"
+        android:layout_height="50dp"
+        android:layout_alignParentRight="true"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="25dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginBottom="30dp"
+        android:contentDescription="camera toggle"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/camera_flip" />
 
     <LinearLayout
         android:id="@+id/bottom_view"
@@ -18,18 +60,36 @@
         android:layout_height="80dp"
         android:layout_gravity="center_horizontal|bottom"
         android:background="#FFFFFF"
-        android:gravity="center">
+        >
+
+        <ImageButton
+            android:id="@+id/gallery_button"
+            android:layout_width="98dp"
+            android:layout_height="73dp"
+            android:backgroundTint="#FFFFFF"
+            android:contentDescription="move to gallery"
+            android:scaleType="fitCenter"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/camera_gallery" />
 
         <ImageButton
             android:id="@+id/recording_button"
             android:layout_width="98dp"
             android:layout_height="73dp"
-            android:layout_gravity="center_horizontal"
             android:backgroundTint="#FFFFFF"
             android:contentDescription="recording start or stop"
             android:scaleType="fitCenter"
+            android:layout_weight="1"
             app:srcCompat="@drawable/camera_btn" />
+        <Space
+            android:layout_width="98dp"
+            android:layout_height="73dp"
+            android:layout_weight="1"/>
     </LinearLayout>
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
 
 </FrameLayout>
