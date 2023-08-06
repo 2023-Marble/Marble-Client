@@ -1,13 +1,19 @@
 import android.Manifest
+import android.app.Activity
 import android.content.ContentValues
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
+import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.hardware.camera2.CameraCharacteristics
+import android.media.Image
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
+import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -15,19 +21,24 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import com.client.GraphicOverlay
 import com.client.R
+import com.client.VisionImageProcessor
 import com.client.databinding.CameraViewBinding
 import com.client.facedetector.FaceGraphic
 import com.facebook.react.bridge.LifecycleEventListener
+import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.ThemedReactContext
+import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
@@ -57,6 +68,9 @@ class CameraView : FrameLayout, LifecycleOwner {
     private var lensFacing = Facing.BACK
     private lateinit var binding: CameraViewBinding
     private lateinit var camera : CameraView
+    private var imageProcessor: VisionImageProcessor? = null
+    private var faceGraphic :FaceGraphic? =null
+    private var newBitmap: Bitmap? = null
 
     constructor(context: ThemedReactContext) : super(context) {
         this.context = context
@@ -90,7 +104,16 @@ class CameraView : FrameLayout, LifecycleOwner {
 
         galleryBtn=layout.findViewById<ImageButton>(R.id.gallery_button)
         galleryBtn.setOnClickListener{
-            val intent = Intent(Intent.ACTION_PICK)
+            var targetUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            val targetDir = Environment.getExternalStorageDirectory().toString() + "/Movies/Marble"
+            targetUri = targetUri.buildUpon().appendQueryParameter(
+                "bucketId",
+                targetDir.lowercase(Locale.getDefault()).hashCode().toString()
+            ).build()
+            Log.d(TAG, "targetUri : $targetUri")
+            val intent = Intent(Intent.ACTION_VIEW, targetUri)
+            (context.currentActivity)?.startActivityForResult(intent, 200)
+
         }
 
         val flipBtn=layout.findViewById<ImageButton>(R.id.flip_button)
@@ -105,8 +128,6 @@ class CameraView : FrameLayout, LifecycleOwner {
         }
 
 
-        //startCamera()
-
         lifecycleRegistry = LifecycleRegistry(this)
         camera.setLifecycleOwner(this)
         camera.setMode(Mode.VIDEO)
@@ -116,14 +137,14 @@ class CameraView : FrameLayout, LifecycleOwner {
             .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
             .enableTracking()
             .build()
+        val detector = FaceDetection.getClient(faceDetectorOptions)
 
         camera.addFrameProcessor(object :FrameProcessor{
             private var lastTime = System.currentTimeMillis()
+            @RequiresApi(Build.VERSION_CODES.Q)
             override fun process(frame: Frame) {
                 val newTime = frame.time
-                val delay = newTime - lastTime
-                lastTime = newTime
-                //Log.d("CameraView Frame", "$delay")
+
                 if (frame.format == ImageFormat.NV21
                     && frame.dataClass == ByteArray::class.java) {
                     val data = frame.getData<ByteArray>()
@@ -141,23 +162,106 @@ class CameraView : FrameLayout, LifecycleOwner {
                     val bitmap = BitmapFactory.decodeByteArray(jpegByteArray,
                         0, jpegByteArray.size)
                     bitmap.toString()
-                    val image = InputImage.fromBitmap(bitmap,0)
+
+                    val rotationDegrees = frame.rotationToView
+
+                    val image = InputImage.fromBitmap(bitmap,rotationDegrees)
                     val isImageFlipped = lensFacing == Facing.FRONT
-                    val rotationDegrees = frame.getRotationToView()
-                    Log.d("CameraView ro","$rotationDegrees")
-                    if (rotationDegrees == 0 || rotationDegrees == 180) {
-                        graphicOverlay!!.setImageSourceInfo(frame.size.width, frame.size.height, isImageFlipped)
-                    } else {
-                        graphicOverlay!!.setImageSourceInfo(frame.size.height, frame.size.width, isImageFlipped)
-                    }
-                    val detector = FaceDetection.getClient(faceDetectorOptions)
-                    detector.process(image)
-                        .addOnSuccessListener { faces ->
-                            for (face in faces) {
-                                graphicOverlay?.add(FaceGraphic(graphicOverlay, face))
-                            }
+                    var matrix = Matrix()
+
+                    if (rotationDegrees == 90 || rotationDegrees == 270) {
+                        if(isImageFlipped){
+                            matrix.setScale(-1f,1f,bitmap.width/2f,bitmap.height/2f)
                         }
+                            matrix.postRotate(90f)
+
+                        graphicOverlay!!.setImageSourceInfo(frame.size.height, frame.size.width, isImageFlipped)
+                    } else {
+                        graphicOverlay!!.setImageSourceInfo(frame.size.width, frame.size.height, isImageFlipped)
+                   }
+                    try{
+                            Tasks.await(detector.process(image)
+                            .addOnSuccessListener { faces ->
+                                graphicOverlay!!.clear()
+                                for (face in faces) {
+                                        newBitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.width,bitmap.height,matrix,true)
+                                        var left = face.boundingBox.left
+                                        var top = face.boundingBox.top
+                                        val width = face.boundingBox.width()
+                                        val height = face.boundingBox.height()
+                                        if( left< 0){
+                                            left=0
+                                        }
+                                        if( top< 0){
+                                            top = 0
+                                        }
+                                        var w = width
+                                        var h = height
+                                        if(left+width>newBitmap!!.width){
+                                            w = width-(left+width-newBitmap!!.width)
+                                        }
+                                        if(top+height>newBitmap!!.height){
+                                            h = height-(top+height-newBitmap!!.height)
+                                        }
+if(w>0 && h>0){
+    val faceBitmap = Bitmap.createBitmap(newBitmap!!,left,top,w,h)
+
+    Log.d(TAG,"faceBitmap : ${getBase64String(faceBitmap)}")
+    graphicOverlay?.add(FaceGraphic(graphicOverlay, face,faceBitmap))
+}else{
+    Log.d(TAG,"마이너스$w,$h")
+}
+
+                                    }
+
+                            }
+                            .addOnFailureListener{
+                                    Log.e(TAG,"$it")
+                            })
+                    }catch (e:Exception){
+                        Log.e(TAG,"error $e")
+                    }
+
+
+                }else if(frame.dataClass === Image::class.java){
+                    val data: Image = frame.getData()
+                    val jpegStream = ByteArrayOutputStream()
+                    val jpegByteArray = jpegStream.toByteArray()
+                    val bitmap = BitmapFactory.decodeByteArray(jpegByteArray,
+                        0, jpegByteArray.size)
+                    bitmap.toString()
+                    val rotationDegrees = frame.rotationToUser
+                    val image = InputImage.fromBitmap(bitmap,rotationDegrees)
+                    val isImageFlipped = lensFacing == Facing.FRONT
+
+
+                    if (rotationDegrees == 90 || rotationDegrees == 270) {
+                        var matrix = Matrix()
+                        matrix.postRotate(rotationDegrees.toFloat())
+                        graphicOverlay!!.setImageSourceInfo(frame.size.height, frame.size.width, isImageFlipped)
+
+                    } else {
+                        graphicOverlay!!.setImageSourceInfo(frame.size.width, frame.size.height, isImageFlipped)
+                    }
+                    try{
+                        Tasks.await(detector.process(image)
+                            .addOnSuccessListener { faces ->
+                                graphicOverlay!!.clear()
+                                //Log.d(TAG,"${faces.size}")
+                                for (face in faces) {
+                                    graphicOverlay?.add(FaceGraphic(graphicOverlay, face,
+                                        Bitmap.createBitmap(newBitmap!!,0,0,bitmap.width,bitmap.height,matrix,false)))
+                                }
+
+                            }
+                            .addOnFailureListener{
+
+                            })
+                }catch (e:Exception){
+                        Log.e(TAG,"error $e")
                 }
+                }
+                frame.release()
             }
         })
         context.addLifecycleEventListener(object : LifecycleEventListener {
@@ -175,7 +279,9 @@ class CameraView : FrameLayout, LifecycleOwner {
         })
 
     }
-
+    fun ReactContext.currentActivity(): Activity? {
+        return currentActivity
+    }
     private inner class Listener:CameraListener(){
         override fun onVideoTaken(result: VideoResult) {
             Log.d("CameraView","결과")
@@ -200,7 +306,7 @@ class CameraView : FrameLayout, LifecycleOwner {
                         this.inputStream().copyTo(outputStream)
                     }
                 }
-                Toast.makeText(context, "동영상이 갤러리에 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "동영상이 저장되었습니다.", Toast.LENGTH_SHORT).show()
             }
         }
         // 동영상 촬영 종료 리스너
@@ -216,9 +322,18 @@ class CameraView : FrameLayout, LifecycleOwner {
     }
 
 
+    private fun getBase64String(bitmap: Bitmap): String? {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        val matrix = Matrix()
+        var newBitmap = bitmap
+        if(bitmap.width>100 || bitmap.height>100){
+            newBitmap=Bitmap.createScaledBitmap(bitmap,100,100,true)
+        }
 
-
-
+        newBitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream)
+        val imageBytes = byteArrayOutputStream.toByteArray()
+        return Base64.encodeToString(imageBytes, Base64.NO_WRAP)
+    }
 
 
     @androidx.annotation.OptIn(ExperimentalCamera2Interop::class)

@@ -6,16 +6,6 @@
     android:layout_height="match_parent"
     android:layout_gravity="bottom">
 
-<!--    <androidx.camera.view.PreviewView-->
-<!--        android:id="@+id/camera_view"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="651dp">-->
-<!--    </androidx.camera.view.PreviewView>-->
-<!--    <com.client.GraphicOverlay-->
-<!--        android:id="@+id/graphic_overlay"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="match_parent"-->
-<!--        />-->
     <com.otaliastudios.cameraview.CameraView
         android:id="@+id/camera"
         android:keepScreenOn="true"
@@ -23,22 +13,14 @@
         android:layout_height="651dp"
         app:cameraEngine="camera1"
         app:cameraPreview="glSurface">
-            <com.client.GraphicOverlay
-                android:id="@+id/graphic_overlay"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_drawOnPictureSnapshot="false"
-                app:layout_drawOnPreview="true"
-                app:layout_drawOnVideoSnapshot="true"
-                android:backgroundTint="#aabbcc"
-                />
-        <ImageView
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+
+        <com.client.GraphicOverlay
+            android:id="@+id/graphic_overlay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             app:layout_drawOnPictureSnapshot="false"
             app:layout_drawOnPreview="true"
-            app:layout_drawOnVideoSnapshot="true"
-            app:srcCompat="@drawable/camera_gallery"/>
+            app:layout_drawOnVideoSnapshot="true" />
     </com.otaliastudios.cameraview.CameraView>
     <ImageButton
         android:id="@+id/flip_button"
@@ -52,6 +34,7 @@
         android:layout_marginBottom="30dp"
         android:contentDescription="camera toggle"
         android:scaleType="fitCenter"
+        android:backgroundTint="#00ffffff"
         app:srcCompat="@drawable/camera_flip" />
 
     <LinearLayout
@@ -86,10 +69,5 @@
             android:layout_height="73dp"
             android:layout_weight="1"/>
     </LinearLayout>
-
-    <Space
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
 
 </FrameLayout>

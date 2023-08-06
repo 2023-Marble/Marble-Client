@@ -20,6 +20,7 @@ package com.client
 import android.app.ActivityManager
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Build.VERSION_CODES
 import android.os.SystemClock
 import android.util.Log
@@ -47,6 +48,8 @@ import com.client.InferenceInfoGraphic
 import com.client.ScopedExecutor
 import com.client.VisionImageProcessor
 import com.client.preference.PreferenceUtils
+import com.otaliastudios.cameraview.frame.Frame
+import java.io.ByteArrayOutputStream
 import java.lang.Math.max
 import java.lang.Math.min
 import java.nio.ByteBuffer
@@ -249,6 +252,56 @@ abstract class VisionProcessorBase<T>(context: Context) : VisionImageProcessor {
             // images when finished using them. Otherwise, new images may not be received or the camera
             // may stall.
             .addOnCompleteListener { image.close() }
+    }
+
+    @RequiresApi(VERSION_CODES.LOLLIPOP)
+    @ExperimentalGetImage
+    override fun processFrame(frame: Frame, graphicOverlay: GraphicOverlay) {
+        val frameStartMs = SystemClock.elapsedRealtime()
+        if (isShutdown) {
+            return
+        }
+        var bitmap: Bitmap? = null
+        val jpegStream = ByteArrayOutputStream()
+        val jpegByteArray = jpegStream.toByteArray()
+        if (!PreferenceUtils.isCameraLiveViewportEnabled(graphicOverlay.context)) {
+            bitmap = BitmapFactory.decodeByteArray(jpegByteArray,
+                0, jpegByteArray.size)
+        }
+        bitmap = BitmapFactory.decodeByteArray(jpegByteArray,
+            0, jpegByteArray.size)
+        val image = InputImage.fromBitmap(bitmap,0)
+        if (isMlImageEnabled(graphicOverlay.context)) {
+//            val mlImage =
+//                MediaMlImageBuilder(image.image!!).setRotation(image.imageInfo.rotationDegrees).build()
+            requestDetectInImage(
+                image,
+                graphicOverlay,
+                /* originalCameraImage= */ bitmap,
+                /* shouldShowFps= */ true,
+                frameStartMs
+            )
+                // When the image is from CameraX analysis use case, must call image.close() on received
+                // images when finished using them. Otherwise, new images may not be received or the camera
+                // may stall.
+                // Currently MlImage doesn't support ImageProxy directly, so we still need to call
+                // ImageProxy.close() here.
+                .addOnCompleteListener { frame.release() }
+
+            return
+        }
+
+        requestDetectInImage(
+            image,
+            graphicOverlay,
+            /* originalCameraImage= */ bitmap,
+            /* shouldShowFps= */ true,
+            frameStartMs
+        )
+            // When the image is from CameraX analysis use case, must call image.close() on received
+            // images when finished using them. Otherwise, new images may not be received or the camera
+            // may stall.
+            .addOnCompleteListener { frame.release() }
     }
 
     // -----------------Common processing logic-------------------------------------------------------
