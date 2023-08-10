@@ -17,24 +17,22 @@ const ImagePickModal = ({toggle, setToggle, mode}: props) => {
     'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Implb25nZXVuQGdtYWlsLmNvbSIsImlhdCI6MTY4NzcwNDM4NywiZXhwIjoxNjg3NzA3OTg3fQ.NMsgLH4jvnsA8q8RWd4d3KksvdIqRyw_81C9LPs0Vmc';
   const queryClient = useQueryClient();
   //api 호출
-  const addUserData = async (url: string) => {
-    const res = await axios.post(
-      `${API_URL}${mode}`,
-      {
-        url: url,
+  const addUserData = async (file: Object) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await axios.post(`${API_URL}${mode}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: token,
       },
-      {
-        headers: {
-          Authorization: token,
-        },
-      },
-    );
+    });
     return res.data;
   };
 
-  const {mutate} = useMutation((url: string) => addUserData(url), {
+  const {mutate} = useMutation((file: Object) => addUserData(file), {
     onSuccess: () => {
       queryClient.invalidateQueries('userData');
+      console.log('DDD');
     },
     onError: error => console.log(error),
   });
@@ -42,11 +40,25 @@ const ImagePickModal = ({toggle, setToggle, mode}: props) => {
   const handleImagePicker = async (type: string) => {
     if (type === 'library')
       await launchImageLibrary({mediaType: 'photo'}, async (res: any) => {
-        res?.assets && mutate(res?.assets[0]?.uri);
+        console.log('file', res);
+        //res?.assets && mutate(res?.assets[0]?.uri);
+        res?.assets &&
+          mutate({
+            name: res.assets[0].fileName,
+            type: res.assets[0].type,
+            uri: res.assets[0].uri,
+          });
       });
     else {
       await launchCamera({mediaType: 'photo'}, async (res: any) => {
-        res?.assets && mutate(res?.assets[0]?.uri);
+        console.log('file', res);
+        //res?.assets && mutate(res?.assets[0]?.uri);
+        res?.assets &&
+          mutate({
+            name: res.assets[0].fileName,
+            type: res.assets[0].type,
+            uri: res.assets[0].uri,
+          });
       });
     }
   };
