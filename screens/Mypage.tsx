@@ -8,6 +8,8 @@ import {
   FlatList,
   Pressable,
   ScrollView,
+  NativeModules,
+  ImageSourcePropType,
 } from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import FaceImagePickModal from '../components/ImagePickModal';
@@ -108,11 +110,24 @@ const DeleteCircle = styled.TouchableOpacity`
 type OptionProps = {
   id: number;
   title: string;
-  url: any;
+  url: string;
   option: any;
   setOption: React.Dispatch<React.SetStateAction<any>>;
 };
 const Option = ({id, title, url, option, setOption}: OptionProps) => {
+  const saveOptionImage = async (url: string) => {
+    await AsyncStorage.setItem('@optionImage', url);
+  };
+  const clickOption = () => {
+    setOption({id: id, title: title});
+    if (title === '커스텀') {
+      saveOptionImage(url);
+    } else {
+      saveOptionImage("");
+    }
+    console.log('ok');
+  };
+
   return (
     <TouchableOpacity
       style={{
@@ -122,7 +137,7 @@ const Option = ({id, title, url, option, setOption}: OptionProps) => {
         justifyContent: 'space-between',
         alignItems: 'center',
       }}
-      onPress={() => setOption({id: id, title: title})}>
+      onPress={() => clickOption()}>
       <RowView>
         <Image
           source={title === '커스텀' ? {uri: url} : url}
@@ -146,7 +161,7 @@ const Mypage = ({
   navigation: {navigate},
 }: NativeStackScreenProps<any, 'Home'>) => {
   const queryClient = useQueryClient();
-
+  const {CameraModule} = NativeModules;
   const [optionToggle, setOptionToggle] = useState<boolean>(false);
   const [faceEditToggle, setFaceEditToggle] = useState<boolean>(false);
   const [option, setOption] = useState<any>({id: -1, title: '기본'});
@@ -154,17 +169,17 @@ const Mypage = ({
   const [optionModalToggle, setOptionModalToggle] = useState<boolean>(false);
   const basicData = [
     {
-      mozaicId: -1,
+      mosaicId: -1,
       title: '기본',
       url: require('../assets/images/mosaic.png'),
     },
     {
-      mozaicId: -2,
+      mosaicId: -2,
       title: '블러',
       url: require('../assets/images/blur.png'),
     },
     {
-      mozaicId: -3,
+      mosaicId: -3,
       title: '표정',
       url: require('../assets/images/smile.png'),
     },
@@ -211,11 +226,20 @@ const Mypage = ({
     getOption();
   }, []);
 
+  const getOptionImage = async () => {
+    let value = await AsyncStorage.getItem('@optionImage');
+    CameraModule.getImage(value);
+  };
+
   useEffect(() => {
     const saveOption = async () => {
       await AsyncStorage.setItem('@option', JSON.stringify(option));
     };
     saveOption();
+    CameraModule.getOption(option.id);
+    if (option.id >= 0) {
+      getOptionImage();
+    }
   }, [option]);
 
   return (
@@ -361,7 +385,7 @@ const Mypage = ({
                     return (
                       <>
                         <Option
-                          id={item.mozaicId}
+                          id={item.mosaicId}
                           title={item.title}
                           url={item.url}
                           option={option}

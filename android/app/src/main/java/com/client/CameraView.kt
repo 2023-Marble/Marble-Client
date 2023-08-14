@@ -10,6 +10,7 @@ import android.graphics.Rect
 import android.graphics.YuvImage
 import android.hardware.camera2.CameraCharacteristics
 import android.media.Image
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -105,13 +106,7 @@ class CameraView : FrameLayout, LifecycleOwner {
         galleryBtn=layout.findViewById<ImageButton>(R.id.gallery_button)
         galleryBtn.setOnClickListener{
             var targetUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-            val targetDir = Environment.getExternalStorageDirectory().toString() + "/Movies/Marble"
-            targetUri = targetUri.buildUpon().appendQueryParameter(
-                "bucketId",
-                targetDir.lowercase(Locale.getDefault()).hashCode().toString()
-            ).build()
-            Log.d(TAG, "targetUri : $targetUri")
-            val intent = Intent(Intent.ACTION_VIEW, targetUri)
+            val intent = Intent(Intent.ACTION_VIEW,targetUri)
             (context.currentActivity)?.startActivityForResult(intent, 200)
 
         }
@@ -184,6 +179,7 @@ class CameraView : FrameLayout, LifecycleOwner {
                             .addOnSuccessListener { faces ->
                                 graphicOverlay!!.clear()
                                 for (face in faces) {
+                                        Log.d(TAG,"face:$face")
                                         newBitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.width,bitmap.height,matrix,true)
                                         var left = face.boundingBox.left
                                         var top = face.boundingBox.top
@@ -203,19 +199,20 @@ class CameraView : FrameLayout, LifecycleOwner {
                                         if(top+height>newBitmap!!.height){
                                             h = height-(top+height-newBitmap!!.height)
                                         }
-if(w>0 && h>0){
-    val faceBitmap = Bitmap.createBitmap(newBitmap!!,left,top,w,h)
+                                        if(w>0 && h>0){
+                                            val faceBitmap = Bitmap.createBitmap(newBitmap!!,left,top,w,h)
 
-    Log.d(TAG,"faceBitmap : ${getBase64String(faceBitmap)}")
-    graphicOverlay?.add(FaceGraphic(graphicOverlay, face,faceBitmap))
-}else{
-    Log.d(TAG,"마이너스$w,$h")
-}
+                                            Log.d(TAG,"faceBitmap : ${getBase64String(faceBitmap)}")
+                                            graphicOverlay?.add(FaceGraphic(graphicOverlay, face,faceBitmap,context))
+                                        }else{
+                                            Log.d(TAG,"마이너스$w,$h")
+                                        }
 
                                     }
 
                             }
                             .addOnFailureListener{
+                                graphicOverlay!!.clear()
                                     Log.e(TAG,"$it")
                             })
                     }catch (e:Exception){
@@ -249,8 +246,35 @@ if(w>0 && h>0){
                                 graphicOverlay!!.clear()
                                 //Log.d(TAG,"${faces.size}")
                                 for (face in faces) {
-                                    graphicOverlay?.add(FaceGraphic(graphicOverlay, face,
-                                        Bitmap.createBitmap(newBitmap!!,0,0,bitmap.width,bitmap.height,matrix,false)))
+                                    Log.d(TAG,"face:$face")
+                                    newBitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.width,bitmap.height,matrix,true)
+                                    var left = face.boundingBox.left
+                                    var top = face.boundingBox.top
+                                    val width = face.boundingBox.width()
+                                    val height = face.boundingBox.height()
+                                    if( left< 0){
+                                        left=0
+                                    }
+                                    if( top< 0){
+                                        top = 0
+                                    }
+                                    var w = width
+                                    var h = height
+                                    if(left+width>newBitmap!!.width){
+                                        w = width-(left+width-newBitmap!!.width)
+                                    }
+                                    if(top+height>newBitmap!!.height){
+                                        h = height-(top+height-newBitmap!!.height)
+                                    }
+                                    if(w>0 && h>0){
+                                        val faceBitmap = Bitmap.createBitmap(newBitmap!!,left,top,w,h)
+
+                                        Log.d(TAG,"faceBitmap : ${getBase64String(faceBitmap)}")
+                                        graphicOverlay?.add(FaceGraphic(graphicOverlay, face,faceBitmap,context))
+                                    }else{
+                                        Log.d(TAG,"마이너스$w,$h")
+                                    }
+
                                 }
 
                             }

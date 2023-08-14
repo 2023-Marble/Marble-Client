@@ -1,25 +1,40 @@
 package com.client.facedetector
 
+import android.R.attr.src
+import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapShader
+import android.graphics.BitmapFactory
 import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.MaskFilter
+import android.graphics.ImageDecoder
 import android.graphics.Paint
-import android.graphics.Shader
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
-import com.client.Camera
+import androidx.annotation.RequiresApi
+import com.client.CameraModule
 import com.client.GraphicOverlay
 import com.client.GraphicOverlay.Graphic
+import com.client.R
 import com.google.mlkit.vision.face.Face
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.MalformedURLException
+import java.net.URL
 
 
 /**
  * Graphic instance for rendering face position, contour, and landmarks within the associated
  * graphic overlay view.
  */
-class FaceGraphic constructor(overlay: GraphicOverlay?, private val face: Face,bitmap: Bitmap) : Graphic(overlay) {
+class FaceGraphic constructor(overlay: GraphicOverlay?, private val face: Face,bitmap: Bitmap,private val context: Context) : Graphic(overlay) {
     private val numColors = COLORS.size
     private val idPaints = Array(numColors) { Paint() }
     private val boxPaints = Array(numColors) { Paint() }
@@ -27,17 +42,16 @@ class FaceGraphic constructor(overlay: GraphicOverlay?, private val face: Face,b
     private val mosaicPaints = Paint()
     private val paints = Paint()
     private val bitmap = bitmap
-    private var dstW = 10
-    private var dstH = 10
-    private var filter = false
+    private var mosaicBitmap:Bitmap?=null
 
 
     init {
         paints.isAntiAlias = true
-        paints.maskFilter=BlurMaskFilter(10f,BlurMaskFilter.Blur.NORMAL)
+        paints.maskFilter=BlurMaskFilter(20f,BlurMaskFilter.Blur.NORMAL)
     }
 
     /** Draws the face annotations for position on the supplied canvas. */
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun draw(canvas: Canvas) {
         Log.d("CameraView draw","FaceGraphic")
         // Draws a circle at the position of the detected face, with the face's track id below.
@@ -52,18 +66,34 @@ class FaceGraphic constructor(overlay: GraphicOverlay?, private val face: Face,b
         var height = (bottom-top).toInt()
 
         //모자이크 옵션
-        if(Camera.optionId==-1){
-            dstW=10
-            dstH=10
-            filter=false
-        }else if(Camera.optionId==-2){
-            dstW=30
-            dstH=30
-            filter=true
+        if(CameraModule.optionId==-1){//모자이크
+            val temp = Bitmap.createScaledBitmap(bitmap,10,10,false)
+            mosaicBitmap=Bitmap.createScaledBitmap(temp,bitmap.width,bitmap.height,false)
+        }else if(CameraModule.optionId==-2){//블러
+            val temp = Bitmap.createScaledBitmap(bitmap,30,30,true)
+            mosaicBitmap=Bitmap.createScaledBitmap(temp,bitmap.width,bitmap.height,true)
+        }else if(CameraModule.optionId==-3){//표정
+            paints.reset()
+            if(face.smilingProbability!! >=0.7f){
+                mosaicBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.smile)
+                mosaicBitmap=Bitmap.createScaledBitmap(mosaicBitmap!!,width,height,false)
+            }else{
+                mosaicBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.natural)
+                mosaicBitmap=Bitmap.createScaledBitmap(mosaicBitmap!!,width,height,false)
+            }
+        }else{
+                paints.reset()
+                mosaicBitmap=Bitmap.createScaledBitmap(CameraModule.customBitmap!!, width, height, false)
+                Log.d(TAG, "mosaic,$mosaicBitmap")
+                canvas.drawBitmap(mosaicBitmap!!,left,top,paints)
+                Log.d(TAG,"완료")
+
         }
-        val temp = Bitmap.createScaledBitmap(bitmap,dstW,dstH,filter)
-        val mosaicBitmap=Bitmap.createScaledBitmap(temp,bitmap.width,bitmap.height,filter)
-        canvas.drawBitmap(mosaicBitmap,left,top,paints)
+
+        if(CameraModule.optionId!!<0){
+            canvas.drawBitmap(mosaicBitmap!!,left,top,paints)
+
+        }
 
 
 

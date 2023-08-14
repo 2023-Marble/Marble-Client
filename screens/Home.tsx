@@ -10,6 +10,7 @@ import {
 import colors from '../colors';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import CameraView from '../components/CameraView';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Container = styled.View`
   flex: 1;
@@ -70,10 +71,27 @@ const Home = ({
   const device = devices[cameraPosition];
   const format = useCameraFormat(device);
   const [isRecording, setIsRecording] = useState<boolean>(false);
-  const camera = useRef<Camera | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
   const [duration, setDuration] = useState<string | null>(null);
-  //const {CameraView}=NativeModules;
+  const {CameraModule} = NativeModules;
+
+  const getOptionImage = async () => {
+    let value = await AsyncStorage.getItem('@optionImage');
+    CameraModule.getImage(value);
+  };
+  //설정되어있는 옵션 가져오기
+  useEffect(() => {
+    const getOption = async () => {
+      const value = await AsyncStorage.getItem('@option');
+      if (value !== null) {
+        CameraModule.getOption(JSON.parse(value).id);
+        if (JSON.parse(value).id >= 0) {
+          getOptionImage();
+      }
+      }
+    };
+    getOption();
+  }, []);
 
   //카메라, 마이크 권한 부여 여부 확인
   useEffect(() => {
@@ -123,7 +141,6 @@ const Home = ({
     }
     return () => clearInterval(intervalId);
   }, [isRecording]);
-
 
   console.log(device?.supportsParallelVideoProcessing);
   if (cameraPermission !== 'authorized') {

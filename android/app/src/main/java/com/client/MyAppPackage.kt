@@ -16,6 +16,6 @@ class MyAppPackage : ReactPackage {
 
     override fun createNativeModules(
         reactContext: ReactApplicationContext
-    ): MutableList<NativeModule> = listOf(Camera(reactContext)).toMutableList()
+    ): MutableList<NativeModule> = listOf(CameraModule(reactContext)).toMutableList()
 
 }
