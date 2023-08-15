@@ -178,6 +178,7 @@ class CameraView : FrameLayout, LifecycleOwner {
                             Tasks.await(detector.process(image)
                             .addOnSuccessListener { faces ->
                                 graphicOverlay!!.clear()
+
                                 for (face in faces) {
                                         Log.d(TAG,"face:$face")
                                         newBitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.width,bitmap.height,matrix,true)

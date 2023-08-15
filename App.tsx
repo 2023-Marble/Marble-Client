@@ -1,7 +1,9 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
+import {NativeModules} from 'react-native';
 import {QueryClient, QueryClientProvider} from 'react-query';
 import {NavigationContainer} from '@react-navigation/native';
 import Login from './screens/Login';
+import SplashScreen from 'react-native-splash-screen';
 //component
 import Stack from './navigation/Stack';
 
@@ -10,7 +12,13 @@ if (__DEV__) {
 }
 
 export default function App() {
-  const [isLogin, setIsLogin] = useState<boolean>(true);
+  const {CameraModule} = NativeModules;
+  useEffect(() => {
+    SplashScreen.hide();
+    CameraModule.handlePermissions();
+
+  }, []);
+  const [isLogin, setIsLogin] = useState<boolean>(false);
   const queryClient = new QueryClient();
   return (
     <QueryClientProvider client={queryClient}>
