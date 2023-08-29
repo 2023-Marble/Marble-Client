@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import styled from '@emotion/native';
 import colors from '../colors';
 import {
@@ -7,9 +7,7 @@ import {
   TouchableOpacity,
   FlatList,
   Pressable,
-  ScrollView,
   NativeModules,
-  ImageSourcePropType,
 } from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import FaceImagePickModal from '../components/ImagePickModal';
@@ -18,7 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {API_URL} from '../api';
 import {useMutation, useQuery, useQueryClient} from 'react-query';
-
+import {TokenContext} from '../App';
 const Container = styled.View`
   flex: 1;
   background-color: #f5f5f5;
@@ -123,7 +121,7 @@ const Option = ({id, title, url, option, setOption}: OptionProps) => {
     if (title === '커스텀') {
       saveOptionImage(url);
     } else {
-      saveOptionImage("");
+      saveOptionImage('');
     }
     console.log('ok');
   };
@@ -159,7 +157,7 @@ const Option = ({id, title, url, option, setOption}: OptionProps) => {
 
 const Mypage = ({
   navigation: {navigate},
-}: NativeStackScreenProps<any, 'Home'>) => {
+}: NativeStackScreenProps<any, 'Home' | 'Login'>) => {
   const queryClient = useQueryClient();
   const {CameraModule} = NativeModules;
   const [optionToggle, setOptionToggle] = useState<boolean>(false);
@@ -185,14 +183,12 @@ const Mypage = ({
     },
   ];
 
-  const token =
-    'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Implb25nZXVuQGdtYWlsLmNvbSIsImlhdCI6MTY4NzcwNDM4NywiZXhwIjoxNjg3NzA3OTg3fQ.NMsgLH4jvnsA8q8RWd4d3KksvdIqRyw_81C9LPs0Vmc';
-
+  const {token} = useContext(TokenContext);
   //api
   const getUserData = async () => {
     const res = await axios.get(`${API_URL}user`, {
       headers: {
-        Authorization: token,
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -201,13 +197,14 @@ const Mypage = ({
   const deleteFaceData = async (id: number) => {
     const res = await axios.delete(`${API_URL}image/${id}`, {
       headers: {
-        Authorization: token,
+        Authorization: `Bearer ${token}`,
       },
     });
   };
 
   const {isLoading, data} = useQuery('userData', getUserData, {
     refetchOnWindowFocus: false,
+    onSuccess: res => console.log(res),
     onError: error => console.log(error),
   });
 
@@ -241,6 +238,11 @@ const Mypage = ({
       getOptionImage();
     }
   }, [option]);
+
+  const handleLogout = async () => {
+    await AsyncStorage.setItem('@refreshToken', JSON.stringify(''));
+    navigate('Login');
+  };
 
   return (
     <Container>
@@ -287,7 +289,8 @@ const Mypage = ({
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-              }}>
+              }}
+              onPress={() => handleLogout()}>
               <Text
                 style={{
                   fontWeight: '900',

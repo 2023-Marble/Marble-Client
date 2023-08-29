@@ -1,4 +1,4 @@
-package com.client.preference;
+package com.marble.preference;
 
 /*
  * Copyright 2020 Google LLC. All rights reserved.
@@ -31,7 +31,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.camera.core.CameraSelector;
-import com.client.R;
+import com.marble.R;
 import java.util.Arrays;
 import java.util.List;
 

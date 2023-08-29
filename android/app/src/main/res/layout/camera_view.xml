@@ -14,7 +14,7 @@
         app:cameraEngine="camera1"
         app:cameraPreview="glSurface">
 
-        <com.client.GraphicOverlay
+        <com.marble.GraphicOverlay
             android:id="@+id/graphic_overlay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

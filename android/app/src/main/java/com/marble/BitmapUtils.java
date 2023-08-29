@@ -1,4 +1,4 @@
-package com.client;
+package com.marble;
 
 import android.content.ContentResolver;
 import android.graphics.Bitmap;
@@ -18,6 +18,8 @@ import androidx.annotation.RequiresApi;
 import androidx.camera.core.ExperimentalGetImage;
 import androidx.camera.core.ImageProxy;
 import androidx.exifinterface.media.ExifInterface;
+import com.marble.FrameMetadata;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,4 +1,4 @@
-package com.client;
+package com.marble;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

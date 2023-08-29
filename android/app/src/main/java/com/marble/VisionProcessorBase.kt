@@ -1,4 +1,4 @@
-package com.client
+package com.marble
 
 /*
  * Copyright 2020 Google LLC. All rights reserved.
@@ -40,14 +40,14 @@ import com.google.android.odml.image.MediaMlImageBuilder
 import com.google.android.odml.image.MlImage
 import com.google.mlkit.common.MlKitException
 import com.google.mlkit.vision.common.InputImage
-import com.client.BitmapUtils
-import com.client.CameraImageGraphic
-import com.client.FrameMetadata
-import com.client.GraphicOverlay
-import com.client.InferenceInfoGraphic
-import com.client.ScopedExecutor
-import com.client.VisionImageProcessor
-import com.client.preference.PreferenceUtils
+import com.marble.BitmapUtils
+import com.marble.CameraImageGraphic
+import com.marble.FrameMetadata
+import com.marble.GraphicOverlay
+import com.marble.InferenceInfoGraphic
+import com.marble.ScopedExecutor
+import com.marble.VisionImageProcessor
+import com.marble.preference.PreferenceUtils
 import com.otaliastudios.cameraview.frame.Frame
 import java.io.ByteArrayOutputStream
 import java.lang.Math.max

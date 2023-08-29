@@ -14,6 +14,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import android.telecom.Call
 import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
@@ -31,16 +32,20 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import com.client.GraphicOverlay
-import com.client.R
-import com.client.VisionImageProcessor
-import com.client.databinding.CameraViewBinding
-import com.client.facedetector.FaceGraphic
+import com.marble.GraphicOverlay
+import com.marble.R
+import com.marble.VisionImageProcessor
+import com.marble.api.ApiObject
+import com.marble.api.FaceId
+import com.marble.databinding.CameraViewBinding
+import com.marble.facedetector.FaceGraphic
 import com.facebook.react.bridge.LifecycleEventListener
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.ThemedReactContext
 import com.google.android.gms.tasks.Tasks
+import com.google.gson.JsonObject
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.otaliastudios.cameraview.CameraListener
@@ -50,10 +55,15 @@ import com.otaliastudios.cameraview.controls.Facing
 import com.otaliastudios.cameraview.controls.Mode
 import com.otaliastudios.cameraview.frame.Frame
 import com.otaliastudios.cameraview.frame.FrameProcessor
+import org.json.JSONArray
+import org.json.JSONObject
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.Objects
 
 
 class CameraView : FrameLayout, LifecycleOwner {
@@ -178,38 +188,85 @@ class CameraView : FrameLayout, LifecycleOwner {
                             Tasks.await(detector.process(image)
                             .addOnSuccessListener { faces ->
                                 graphicOverlay!!.clear()
-
-                                for (face in faces) {
-                                        Log.d(TAG,"face:$face")
-                                        newBitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.width,bitmap.height,matrix,true)
-                                        var left = face.boundingBox.left
-                                        var top = face.boundingBox.top
-                                        val width = face.boundingBox.width()
-                                        val height = face.boundingBox.height()
-                                        if( left< 0){
-                                            left=0
-                                        }
-                                        if( top< 0){
-                                            top = 0
-                                        }
-                                        var w = width
-                                        var h = height
-                                        if(left+width>newBitmap!!.width){
-                                            w = width-(left+width-newBitmap!!.width)
-                                        }
-                                        if(top+height>newBitmap!!.height){
-                                            h = height-(top+height-newBitmap!!.height)
-                                        }
-                                        if(w>0 && h>0){
-                                            val faceBitmap = Bitmap.createBitmap(newBitmap!!,left,top,w,h)
-
-                                            Log.d(TAG,"faceBitmap : ${getBase64String(faceBitmap)}")
-                                            graphicOverlay?.add(FaceGraphic(graphicOverlay, face,faceBitmap,context))
-                                        }else{
-                                            Log.d(TAG,"마이너스$w,$h")
-                                        }
-
+                                //var faceList = arrayListOf<Map<String, Any>>()
+                                var faceList = JSONArray()
+                                var faceBitmapList = mutableMapOf<Number,Bitmap>()
+                                for(face in faces){
+                                    newBitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.width,bitmap.height,matrix,true)
+                                    var left = face.boundingBox.left
+                                    var top = face.boundingBox.top
+                                    val width = face.boundingBox.width()
+                                    val height = face.boundingBox.height()
+                                    if( left< 0){
+                                        left=0
                                     }
+                                    if( top< 0){
+                                        top = 0
+                                    }
+                                    var w = width
+                                    var h = height
+                                    if(left+width>newBitmap!!.width){
+                                        w = width-(left+width-newBitmap!!.width)
+                                    }
+                                    if(top+height>newBitmap!!.height){
+                                        h = height-(top+height-newBitmap!!.height)
+                                    }
+                                    if(w>0 && h>0){
+                                        val faceBitmap = Bitmap.createBitmap(newBitmap!!,left,top,w,h)
+
+                                        Log.d(TAG,"faceBitmap : ${getBase64String(faceBitmap)}")
+                                        val image = getBase64String(faceBitmap)
+                                        val faceMap = mapOf("id" to face.trackingId!!,"image" to image!!)
+                                        //faceList.add(faceMap)
+                                        val jsonObject = JSONObject()
+                                        jsonObject.put("id",face.trackingId)
+                                        jsonObject.put("image",image)
+                                        faceList.put(jsonObject)
+                                        faceBitmapList[face.trackingId!!]= faceBitmap
+                                    }else{
+                                        Log.d(TAG,"마이너스$w,$h")
+                                    }
+
+                                }
+
+                                //api 호출
+                                var faceIdList = listOf<Number>()
+                                if(faceList.length()!=0){
+                                    Log.d(TAG,"$faceList")
+                                    val call = ApiObject.getRetrofitService.getFaceId(faceList)
+                                    call.enqueue(object : Callback<FaceId> {
+                                        override fun onResponse(
+                                            call: retrofit2.Call<FaceId>,
+                                            response: Response<FaceId>
+                                        ) {
+                                            if(response.isSuccessful) {
+                                                faceIdList = response.body()!!.id_list ?: listOf()
+                                                Log.d(TAG,"list: $faceIdList")
+                                                Log.d(TAG,"response: ${response}")
+                                                Log.d(TAG,"response: ${response.body()}")
+                                                Log.d(TAG,"response: ${response.body()!!.id_list}")
+
+                                            }else{
+                                                Log.d(TAG,"리스폰스: ${response.errorBody()}")
+                                                Log.d(TAG,"리스폰스: ${response.code()}")
+                                                Log.d(TAG,"리스폰스: ${response}")
+                                            }
+                                        }
+                                        override fun onFailure(call: retrofit2.Call<FaceId>, t: Throwable) {
+                                            Log.e(TAG,"${t.printStackTrace()}")
+                                        }
+                                    })
+
+                                    for (face in faces) {
+                                        if(!faceIdList.contains(face.trackingId!!.toInt())){
+                                            graphicOverlay?.add(FaceGraphic(graphicOverlay,
+                                                face,
+                                                faceBitmapList[id]!!,context))
+
+                                        }
+                                    }
+                                    Log.d(TAG,"api끝")
+                                }
 
                             }
                             .addOnFailureListener{
@@ -351,8 +408,8 @@ class CameraView : FrameLayout, LifecycleOwner {
         val byteArrayOutputStream = ByteArrayOutputStream()
         val matrix = Matrix()
         var newBitmap = bitmap
-        if(bitmap.width>100 || bitmap.height>100){
-            newBitmap=Bitmap.createScaledBitmap(bitmap,100,100,true)
+        if(bitmap.width>112 || bitmap.height>112){
+            newBitmap=Bitmap.createScaledBitmap(bitmap,112,112,true)
         }
 
         newBitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream)

@@ -1,4 +1,4 @@
-package com.client.facedetector
+package com.marble.facedetector
 
 import android.R.attr.src
 import android.content.Context
@@ -14,10 +14,10 @@ import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.client.CameraModule
-import com.client.GraphicOverlay
-import com.client.GraphicOverlay.Graphic
-import com.client.R
+import com.marble.CameraModule
+import com.marble.GraphicOverlay
+import com.marble.GraphicOverlay.Graphic
+import com.marble.R
 import com.google.mlkit.vision.face.Face
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

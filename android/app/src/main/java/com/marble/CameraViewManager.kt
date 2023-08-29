@@ -1,4 +1,4 @@
-package com.client
+package com.marble
 
 import CameraView
 import android.util.Log

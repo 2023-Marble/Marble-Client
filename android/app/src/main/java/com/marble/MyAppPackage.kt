@@ -1,4 +1,4 @@
-package com.client
+package com.marble
 
 import android.view.View
 import com.facebook.react.ReactPackage

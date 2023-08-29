@@ -1,4 +1,4 @@
-package com.client
+package com.marble
 
 import android.Manifest
 import android.app.Activity
@@ -11,7 +11,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import com.client.facedetector.FaceGraphic
+import com.marble.facedetector.FaceGraphic
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod

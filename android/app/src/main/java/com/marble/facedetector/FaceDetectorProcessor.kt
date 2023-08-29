@@ -1,9 +1,9 @@
-package com.client.facedetector
+package com.marble.facedetector
 
 import android.content.Context
 import android.util.Log
-import com.client.GraphicOverlay
-import com.client.VisionProcessorBase
+import com.marble.GraphicOverlay
+import com.marble.VisionProcessorBase
 import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face

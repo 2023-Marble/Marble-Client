@@ -1,4 +1,4 @@
-package com.client.preference;
+package com.marble.preference;
 
 
 import android.content.Context;
@@ -11,10 +11,9 @@ import androidx.annotation.StringRes;
 import androidx.camera.core.CameraSelector;
 import com.google.android.gms.common.images.Size;
 import com.google.common.base.Preconditions;
-import com.google.mlkit.common.model.LocalModel;
-import com.client.CameraSource;
-import com.client.CameraSource.SizePair;
-import com.client.R;
+import com.marble.CameraSource;
+import com.marble.CameraSource.SizePair;
+import com.marble.R;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 

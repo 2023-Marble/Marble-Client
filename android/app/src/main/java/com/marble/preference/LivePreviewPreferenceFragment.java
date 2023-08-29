@@ -1,4 +1,4 @@
-package com.client.preference;
+package com.marble.preference;
 
 /*
  * Copyright 2020 Google LLC. All rights reserved.
@@ -25,9 +25,9 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.widget.Toast;
 import androidx.annotation.StringRes;
-import com.client.CameraSource;
-import com.client.CameraSource.SizePair;
-import com.client.R;
+import com.marble.CameraSource;
+import com.marble.CameraSource.SizePair;
+import com.marble.R;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

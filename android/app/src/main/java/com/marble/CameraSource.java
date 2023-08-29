@@ -1,4 +1,4 @@
-package com.client;
+package com.marble;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -16,7 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 
 import com.google.android.gms.common.images.Size;
-import com.client.preference.PreferenceUtils;
+import com.marble.preference.PreferenceUtils;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
