@@ -1,9 +1,7 @@
-import React, {useState, useEffect} from 'react';
-import {NativeModules} from 'react-native';
+import React, {useState, useEffect, createContext, useMemo} from 'react';
 import {QueryClient, QueryClientProvider} from 'react-query';
 import {NavigationContainer} from '@react-navigation/native';
-import Login from './screens/Login';
-import SplashScreen from 'react-native-splash-screen';
+
 //component
 import Stack from './navigation/Stack';
 
@@ -11,24 +9,30 @@ if (__DEV__) {
   import('./reactotronConfig').then(() => console.log('Reactotron Configured'));
 }
 
-export default function App() {
-  const {CameraModule} = NativeModules;
-  useEffect(() => {
-    SplashScreen.hide();
-    CameraModule.handlePermissions();
+interface TokenContextType {
+  token: string;
+  setToken: React.Dispatch<React.SetStateAction<string>>;
+}
 
-  }, []);
-  const [isLogin, setIsLogin] = useState<boolean>(false);
+export const TokenContext = createContext<TokenContextType>({
+  token: '',
+  setToken: () => {},
+});
+
+export default function App() {
+  const [token, setToken] = useState<string>('');
+
+  
+  const value = useMemo(() => ({token, setToken}), [token, setToken]);
   const queryClient = new QueryClient();
+
   return (
-    <QueryClientProvider client={queryClient}>
-      {!isLogin ? (
-        <Login />
-      ) : (
+    <TokenContext.Provider value={value}>
+      <QueryClientProvider client={queryClient}>
         <NavigationContainer>
           <Stack />
         </NavigationContainer>
-      )}
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </TokenContext.Provider>
   );
 }

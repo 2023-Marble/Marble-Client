@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {Modal, View} from 'react-native';
 import styled from '@emotion/native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
@@ -6,15 +6,14 @@ import colors from '../colors';
 import axios from 'axios';
 import {API_URL} from '../api';
 import {useQueryClient, useMutation} from 'react-query';
-
+import {TokenContext} from '../App';
 type props = {
   toggle: boolean;
   setToggle: React.Dispatch<React.SetStateAction<boolean>>;
   mode: string;
 };
 const ImagePickModal = ({toggle, setToggle, mode}: props) => {
-  const token =
-    'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Implb25nZXVuQGdtYWlsLmNvbSIsImlhdCI6MTY4NzcwNDM4NywiZXhwIjoxNjg3NzA3OTg3fQ.NMsgLH4jvnsA8q8RWd4d3KksvdIqRyw_81C9LPs0Vmc';
+  const {token} = useContext(TokenContext);
   const queryClient = useQueryClient();
   //api 호출
   const addUserData = async (file: Object) => {
@@ -23,7 +22,7 @@ const ImagePickModal = ({toggle, setToggle, mode}: props) => {
     const res = await axios.post(`${API_URL}${mode}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        Authorization: token,
+        Authorization: `Bearer ${token}`,
       },
     });
     return res.data;

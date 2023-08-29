@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useRef, useCallback} from 'react';
 import styled from '@emotion/native';
-import {StyleSheet, Text, TouchableOpacity, NativeModules} from 'react-native';
+import {Text, TouchableOpacity, NativeModules} from 'react-native';
 import {
   Camera,
   CameraPermissionStatus as PermissionStatus,
@@ -37,25 +37,9 @@ const Duration = styled.Text`
   z-index: 9999;
 `;
 
-const Bottom = styled.View`
-  position: absolute;
-  bottom: 0;
-  left: 0%;
-  width: 100%;
-  height: 10%;
-  background-color: ${colors.white};
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  align-items: center;
-`;
 const BottomImage = styled.Image`
   width: 60px;
   height: 60px;
-`;
-const TopImage = styled.Image`
-  width: 30px;
-  height: 25px;
 `;
 
 const Home = ({
@@ -105,42 +89,42 @@ const Home = ({
   }, []);
 
   // 카메라, 마이크 권한 상태가 not-determined 일 경우 권한 요청
-  useEffect(() => {
-    (async () => {
-      if (cameraPermission === 'not-determined') {
-        setCameraPermission(await Camera.requestCameraPermission());
-      }
-      if (microphonePermissionsion === 'not-determined') {
-        setMicrophonePermission(await Camera.requestMicrophonePermission());
-      }
-    })();
-  }, [cameraPermission, microphonePermissionsion]);
+  // useEffect(() => {
+  //   (async () => {
+  //     if (cameraPermission === 'not-determined') {
+  //       setCameraPermission(await Camera.requestCameraPermission());
+  //     }
+  //     if (microphonePermissionsion === 'not-determined') {
+  //       setMicrophonePermission(await Camera.requestMicrophonePermission());
+  //     }
+  //   })();
+  // }, [cameraPermission, microphonePermissionsion]);
 
-  useEffect(() => {
-    let intervalId: number;
-    if (isRecording) {
-      setDuration('00:00');
-      intervalId = setInterval(() => {
-        const now = new Date().getTime();
-        const duration = now - startTime;
-        if (duration >= 3600000) {
-          setDuration(
-            `${String(Math.floor((duration / (1000 * 60 * 60)) % 24))}:${String(
-              Math.floor((duration / (1000 * 60)) % 60),
-            ).padStart(2, '0')}`,
-          );
-        } else {
-          setDuration(
-            `${String(Math.floor((duration / (1000 * 60)) % 60)).padStart(
-              2,
-              '0',
-            )}:${String(Math.floor((duration / 1000) % 60)).padStart(2, '0')}`,
-          );
-        }
-      }, 1000);
-    }
-    return () => clearInterval(intervalId);
-  }, [isRecording]);
+  // useEffect(() => {
+  //   let intervalId: number;
+  //   if (isRecording) {
+  //     setDuration('00:00');
+  //     intervalId = setInterval(() => {
+  //       const now = new Date().getTime();
+  //       const duration = now - startTime;
+  //       if (duration >= 3600000) {
+  //         setDuration(
+  //           `${String(Math.floor((duration / (1000 * 60 * 60)) % 24))}:${String(
+  //             Math.floor((duration / (1000 * 60)) % 60),
+  //           ).padStart(2, '0')}`,
+  //         );
+  //       } else {
+  //         setDuration(
+  //           `${String(Math.floor((duration / (1000 * 60)) % 60)).padStart(
+  //             2,
+  //             '0',
+  //           )}:${String(Math.floor((duration / 1000) % 60)).padStart(2, '0')}`,
+  //         );
+  //       }
+  //     }, 1000);
+  //   }
+  //   return () => clearInterval(intervalId);
+  // }, [isRecording]);
 
   console.log(device?.supportsParallelVideoProcessing);
   if (cameraPermission !== 'authorized') {
@@ -167,14 +151,6 @@ const Home = ({
   return (
     <Container>
       {isRecording && <Duration>{duration}</Duration>}
-      {/* <TouchableOpacity
-        onPress={handleRecordingButton}
-        style={{zIndex: 9999, position: 'absolute', bottom: 20, left: 30}}>
-        <BottomImage
-          source={require('../assets/images/camera_gallery.png')}
-          style={{width: 45, height: 45, marginLeft: 15}}
-        />
-      </TouchableOpacity> */}
       <CameraView style={{width: '100%', height: '100%'}} />
       <TouchableOpacity
         onPress={() => navigate('Mypage')}

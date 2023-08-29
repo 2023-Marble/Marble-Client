@@ -1,11 +1,14 @@
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {Image, Pressable} from 'react-native';
 import colors from '../colors';
 import styled from '@emotion/native';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {GoogleSignin, User} from '@react-native-google-signin/google-signin';
 import axios from 'axios';
 import {oauth} from '../config/oauth';
 import {API_URL} from '../api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {TokenContext} from '../App';
 
 const Container = styled.View`
   flex: 1;
@@ -32,8 +35,11 @@ const Button = styled.Pressable`
   justify-content: center;
 `;
 
-const Login = () => {
-  const [token, setToken] = useState<string>();
+const Login = ({
+  navigation: {navigate},
+}: NativeStackScreenProps<any, 'Home'>) => {
+  const {setToken} = useContext(TokenContext);
+
   useEffect(() => {
     const socialGoogleConfigure = async () => {
       await GoogleSignin.configure({
@@ -44,36 +50,27 @@ const Login = () => {
   }, []);
 
   const handleClickGoogleBtn = async () => {
-    await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
+    console.log('클릭');
+    await GoogleSignin.hasPlayServices();
     try {
-      const {idToken} = await GoogleSignin.signIn();
+      const userInfo = await GoogleSignin.signIn();
+
+      if (userInfo) {
+        const token = await GoogleSignin.getTokens();
+        googleSignin(token.accessToken);
+      }
     } catch (error) {
       console.log('error', error);
     }
-    console.log('222');
-    // if (serverAuthCode) {
-    //   getAccessToken(serverAuthCode);
-    // }
-  };
-
-  const getAccessToken = async (serverAuthCode: string) => {
-    const res = await axios.post('https://oauth2.googleapis.com/token', {
-      code: serverAuthCode,
-      client_id: oauth.GOOGLE_CLIENT_ID,
-      client_secret: oauth.GOOGLE_CLIENT_SECRET,
-      grant_type: 'authorization_code',
-      redirect_uri: oauth.REDIRECT_URI,
-    });
-    console.log('구글Oauth', res);
-    googleSignin(res.data.access_token);
   };
 
   const googleSignin = async (accessToken: string) => {
     const res = await axios.post(`${API_URL}auth/google/signin`, {
       accessToken: accessToken,
     });
-    console.log('api최종 토큰', res.data);
-    setToken(res.data);
+    await AsyncStorage.setItem('@refreshToken', JSON.stringify(res.data.token));
+    setToken(res.data.token);
+    navigate('Home');
   };
 
   return (
