@@ -68,7 +68,7 @@ const Login = ({
     const res = await axios.post(`${API_URL}auth/google/signin`, {
       accessToken: accessToken,
     });
-    await AsyncStorage.setItem('@refreshToken', JSON.stringify(res.data.token));
+    await AsyncStorage.setItem('@token', JSON.stringify(res.data.token));
     setToken(res.data.token);
     navigate('Home');
   };

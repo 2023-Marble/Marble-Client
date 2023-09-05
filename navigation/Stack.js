@@ -16,7 +16,7 @@ const Stack = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const getToken = async () => {
-    const value = await AsyncStorage.getItem('@refreshToken');
+    const value = await AsyncStorage.getItem('@token');
     value !== null ? setToken(JSON.parse(value)) : setToken('');
     setIsLoading(true);
   };

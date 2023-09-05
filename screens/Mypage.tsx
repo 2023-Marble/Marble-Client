@@ -240,7 +240,7 @@ const Mypage = ({
   }, [option]);
 
   const handleLogout = async () => {
-    await AsyncStorage.setItem('@refreshToken', JSON.stringify(''));
+    await AsyncStorage.setItem('@token', JSON.stringify(''));
     navigate('Login');
   };
 

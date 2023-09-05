@@ -143,7 +143,8 @@ class CameraView : FrameLayout, LifecycleOwner {
             .enableTracking()
             .build()
         val detector = FaceDetection.getClient(faceDetectorOptions)
-
+        var faceIdList = listOf<Number>()
+        var testedFaceId = listOf<Number>()
         camera.addFrameProcessor(object :FrameProcessor{
             private var lastTime = System.currentTimeMillis()
             @RequiresApi(Build.VERSION_CODES.Q)
@@ -185,6 +186,7 @@ class CameraView : FrameLayout, LifecycleOwner {
                         graphicOverlay!!.setImageSourceInfo(frame.size.width, frame.size.height, isImageFlipped)
                    }
                     try{
+
                             Tasks.await(detector.process(image)
                             .addOnSuccessListener { faces ->
                                 graphicOverlay!!.clear()
@@ -213,16 +215,23 @@ class CameraView : FrameLayout, LifecycleOwner {
                                     }
                                     if(w>0 && h>0){
                                         val faceBitmap = Bitmap.createBitmap(newBitmap!!,left,top,w,h)
-
-                                        Log.d(TAG,"faceBitmap : ${getBase64String(faceBitmap)}")
+//                                        graphicOverlay?.add(FaceGraphic(graphicOverlay,
+//                                            face,
+//                                            faceBitmap,context))
                                         val image = getBase64String(faceBitmap)
-                                        val faceMap = mapOf("id" to face.trackingId!!,"image" to image!!)
-                                        //faceList.add(faceMap)
-                                        val jsonObject = JSONObject()
-                                        jsonObject.put("id",face.trackingId)
-                                        jsonObject.put("image",image)
-                                        faceList.put(jsonObject)
+
+                                        //Log.d(TAG,"testedFaceId,${testedFaceId}")
+                                        //if(!testedFaceId.contains(face.trackingId!!.toInt())){
+                                            val jsonObject = JSONObject()
+                                            jsonObject.put("id",face.trackingId)
+                                            jsonObject.put("image",image)
+                                            faceList.put(jsonObject)
+                                            //jsonObject.put("y",face.
+                                            //testedFaceId=testedFaceId+listOf(face.trackingId!!.toInt())
+                                        //}
+
                                         faceBitmapList[face.trackingId!!]= faceBitmap
+
                                     }else{
                                         Log.d(TAG,"마이너스$w,$h")
                                     }
@@ -230,7 +239,6 @@ class CameraView : FrameLayout, LifecycleOwner {
                                 }
 
                                 //api 호출
-                                var faceIdList = listOf<Number>()
                                 if(faceList.length()!=0){
                                     Log.d(TAG,"$faceList")
                                     val call = ApiObject.getRetrofitService.getFaceId(faceList)
@@ -240,11 +248,12 @@ class CameraView : FrameLayout, LifecycleOwner {
                                             response: Response<FaceId>
                                         ) {
                                             if(response.isSuccessful) {
-                                                faceIdList = response.body()!!.id_list ?: listOf()
+                                                var result= response.body()!!.id_list ?: listOf()
+                                                result = result.mapNotNull { it.toString().toIntOrNull() }
+                                                faceIdList=faceIdList+result
+
                                                 Log.d(TAG,"list: $faceIdList")
-                                                Log.d(TAG,"response: ${response}")
                                                 Log.d(TAG,"response: ${response.body()}")
-                                                Log.d(TAG,"response: ${response.body()!!.id_list}")
 
                                             }else{
                                                 Log.d(TAG,"리스폰스: ${response.errorBody()}")
@@ -256,17 +265,30 @@ class CameraView : FrameLayout, LifecycleOwner {
                                             Log.e(TAG,"${t.printStackTrace()}")
                                         }
                                     })
+                                }
+                                val elementType = if (faceIdList.isNotEmpty()) {
+                                    faceIdList[0]::class.simpleName // 첫 번째 요소의 타입 이름을 가져옵니다.
+                                }else{
 
-                                    for (face in faces) {
-                                        if(!faceIdList.contains(face.trackingId!!.toInt())){
+                                }
+                                Log.d(TAG,"${elementType}")
+                                //얼굴 모자이크 하기
+                                for(face in faces){
+                                    Log.d(TAG,"그리기:${faceIdList},${face.trackingId!!},${faceIdList.contains(face.trackingId!!.toInt())}")
+                                    if(!faceIdList.contains(face.trackingId!!.toInt())){
+                                        try{
                                             graphicOverlay?.add(FaceGraphic(graphicOverlay,
                                                 face,
-                                                faceBitmapList[id]!!,context))
-
+                                                faceBitmapList[face.trackingId!!]!!,context))
+                                        }catch(e:Exception){
+                                            Log.d(TAG,"$e")
                                         }
+
+
+                                    }else{
+                                        Log.d(TAG,"제외,${face.trackingId}")
                                     }
-                                    Log.d(TAG,"api끝")
-                                }
+                              }
 
                             }
                             .addOnFailureListener{
