@@ -53,9 +53,7 @@ const Home = ({
   );
   const devices = useCameraDevices();
   const device = devices[cameraPosition];
-  const format = useCameraFormat(device);
   const [isRecording, setIsRecording] = useState<boolean>(false);
-  const [startTime, setStartTime] = useState<number>(0);
   const [duration, setDuration] = useState<string | null>(null);
   const {CameraModule} = NativeModules;
 
@@ -88,45 +86,6 @@ const Home = ({
     })();
   }, []);
 
-  // 카메라, 마이크 권한 상태가 not-determined 일 경우 권한 요청
-  // useEffect(() => {
-  //   (async () => {
-  //     if (cameraPermission === 'not-determined') {
-  //       setCameraPermission(await Camera.requestCameraPermission());
-  //     }
-  //     if (microphonePermissionsion === 'not-determined') {
-  //       setMicrophonePermission(await Camera.requestMicrophonePermission());
-  //     }
-  //   })();
-  // }, [cameraPermission, microphonePermissionsion]);
-
-  // useEffect(() => {
-  //   let intervalId: number;
-  //   if (isRecording) {
-  //     setDuration('00:00');
-  //     intervalId = setInterval(() => {
-  //       const now = new Date().getTime();
-  //       const duration = now - startTime;
-  //       if (duration >= 3600000) {
-  //         setDuration(
-  //           `${String(Math.floor((duration / (1000 * 60 * 60)) % 24))}:${String(
-  //             Math.floor((duration / (1000 * 60)) % 60),
-  //           ).padStart(2, '0')}`,
-  //         );
-  //       } else {
-  //         setDuration(
-  //           `${String(Math.floor((duration / (1000 * 60)) % 60)).padStart(
-  //             2,
-  //             '0',
-  //           )}:${String(Math.floor((duration / 1000) % 60)).padStart(2, '0')}`,
-  //         );
-  //       }
-  //     }, 1000);
-  //   }
-  //   return () => clearInterval(intervalId);
-  // }, [isRecording]);
-
-  console.log(device?.supportsParallelVideoProcessing);
   if (cameraPermission !== 'authorized') {
     return (
       <Container>

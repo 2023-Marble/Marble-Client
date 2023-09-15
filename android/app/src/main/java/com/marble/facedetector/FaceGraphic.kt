@@ -35,11 +35,6 @@ import java.net.URL
  * graphic overlay view.
  */
 class FaceGraphic constructor(overlay: GraphicOverlay?, private val face: Face,bitmap: Bitmap,private val context: Context) : Graphic(overlay) {
-    private val numColors = COLORS.size
-    private val idPaints = Array(numColors) { Paint() }
-    private val boxPaints = Array(numColors) { Paint() }
-    private val labelPaints = Array(numColors) { Paint() }
-    private val mosaicPaints = Paint()
     private val paints = Paint()
     private val bitmap = bitmap
     private var mosaicBitmap:Bitmap?=null
@@ -53,7 +48,6 @@ class FaceGraphic constructor(overlay: GraphicOverlay?, private val face: Face,b
     /** Draws the face annotations for position on the supplied canvas. */
     @RequiresApi(Build.VERSION_CODES.P)
     override fun draw(canvas: Canvas) {
-        Log.d("CameraView draw","FaceGraphic")
         // Draws a circle at the position of the detected face, with the face's track id below.
         val x = translateX(face.boundingBox.centerX().toFloat())
         val y = translateY(face.boundingBox.centerY().toFloat())
@@ -84,9 +78,8 @@ class FaceGraphic constructor(overlay: GraphicOverlay?, private val face: Face,b
         }else{
                 paints.reset()
                 mosaicBitmap=Bitmap.createScaledBitmap(CameraModule.customBitmap!!, width, height, false)
-                Log.d(TAG, "mosaic,$mosaicBitmap")
                 canvas.drawBitmap(mosaicBitmap!!,left,top,paints)
-                Log.d(TAG,"완료")
+
 
         }
 
@@ -105,23 +98,5 @@ class FaceGraphic constructor(overlay: GraphicOverlay?, private val face: Face,b
 
     companion object {
         private const val TAG = "FaceGraphic"
-        private const val FACE_POSITION_RADIUS = 8.0f
-        private const val ID_TEXT_SIZE = 30.0f
-        private const val ID_Y_OFFSET = 40.0f
-        private const val BOX_STROKE_WIDTH = 5.0f
-        private const val NUM_COLORS = 10
-        private val COLORS =
-            arrayOf(
-                intArrayOf(Color.BLACK, Color.WHITE),
-                intArrayOf(Color.WHITE, Color.MAGENTA),
-                intArrayOf(Color.BLACK, Color.LTGRAY),
-                intArrayOf(Color.WHITE, Color.RED),
-                intArrayOf(Color.WHITE, Color.BLUE),
-                intArrayOf(Color.WHITE, Color.DKGRAY),
-                intArrayOf(Color.BLACK, Color.CYAN),
-                intArrayOf(Color.BLACK, Color.YELLOW),
-                intArrayOf(Color.WHITE, Color.BLACK),
-                intArrayOf(Color.BLACK, Color.GREEN)
-            )
     }
 }

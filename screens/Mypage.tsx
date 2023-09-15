@@ -1,6 +1,8 @@
 import React, {useState, useEffect, useContext} from 'react';
 import styled from '@emotion/native';
 import colors from '../colors';
+import {LogBox} from 'react-native';
+
 import {
   View,
   Image,
@@ -17,6 +19,9 @@ import axios from 'axios';
 import {API_URL} from '../api';
 import {useMutation, useQuery, useQueryClient} from 'react-query';
 import {TokenContext} from '../App';
+
+LogBox.ignoreLogs(['Console Warning: ...']);
+
 const Container = styled.View`
   flex: 1;
   background-color: #f5f5f5;

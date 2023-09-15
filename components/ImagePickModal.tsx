@@ -40,7 +40,6 @@ const ImagePickModal = ({toggle, setToggle, mode}: props) => {
     if (type === 'library')
       await launchImageLibrary({mediaType: 'photo'}, async (res: any) => {
         console.log('file', res);
-        //res?.assets && mutate(res?.assets[0]?.uri);
         res?.assets &&
           mutate({
             name: res.assets[0].fileName,
@@ -51,7 +50,6 @@ const ImagePickModal = ({toggle, setToggle, mode}: props) => {
     else {
       await launchCamera({mediaType: 'photo'}, async (res: any) => {
         console.log('file', res);
-        //res?.assets && mutate(res?.assets[0]?.uri);
         res?.assets &&
           mutate({
             name: res.assets[0].fileName,

@@ -11,7 +11,7 @@
         android:keepScreenOn="true"
         android:layout_width="match_parent"
         android:layout_height="651dp"
-        app:cameraEngine="camera1"
+        app:cameraEngine="camera2"
         app:cameraPreview="glSurface">
 
         <com.marble.GraphicOverlay
