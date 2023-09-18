@@ -1,7 +1,6 @@
 import React, {useState, useEffect, useContext} from 'react';
 import styled from '@emotion/native';
 import colors from '../colors';
-import {LogBox} from 'react-native';
 
 import {
   View,
@@ -20,7 +19,6 @@ import {API_URL} from '../api';
 import {useMutation, useQuery, useQueryClient} from 'react-query';
 import {TokenContext} from '../App';
 
-LogBox.ignoreLogs(['Console Warning: ...']);
 
 const Container = styled.View`
   flex: 1;
@@ -141,7 +139,7 @@ const Option = ({id, title, url, option, setOption}: OptionProps) => {
         alignItems: 'center',
       }}
       onPress={() => clickOption()}>
-      <RowView>
+      <RowView key={id}>
         <Image
           source={title === '커스텀' ? {uri: url} : url}
           style={{width: 30, height: 30, marginRight: 10}}

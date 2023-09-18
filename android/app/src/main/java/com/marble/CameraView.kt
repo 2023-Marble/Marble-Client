@@ -365,10 +365,9 @@ class CameraView : FrameLayout, LifecycleOwner {
 
     private fun getBase64String(bitmap: Bitmap): String? {
         val byteArrayOutputStream = ByteArrayOutputStream()
-        val matrix = Matrix()
         var newBitmap = bitmap
-        if(bitmap.width>112 || bitmap.height>112){
-            newBitmap=Bitmap.createScaledBitmap(bitmap,112,112,true)
+        if(bitmap.width>128 || bitmap.height>128){
+            newBitmap=Bitmap.createScaledBitmap(bitmap,128,128,true)
         }
 
         newBitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream)

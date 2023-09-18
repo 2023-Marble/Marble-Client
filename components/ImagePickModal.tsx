@@ -31,7 +31,6 @@ const ImagePickModal = ({toggle, setToggle, mode}: props) => {
   const {mutate} = useMutation((file: Object) => addUserData(file), {
     onSuccess: () => {
       queryClient.invalidateQueries('userData');
-      console.log('DDD');
     },
     onError: error => console.log(error),
   });
@@ -39,7 +38,6 @@ const ImagePickModal = ({toggle, setToggle, mode}: props) => {
   const handleImagePicker = async (type: string) => {
     if (type === 'library')
       await launchImageLibrary({mediaType: 'photo'}, async (res: any) => {
-        console.log('file', res);
         res?.assets &&
           mutate({
             name: res.assets[0].fileName,
@@ -49,7 +47,6 @@ const ImagePickModal = ({toggle, setToggle, mode}: props) => {
       });
     else {
       await launchCamera({mediaType: 'photo'}, async (res: any) => {
-        console.log('file', res);
         res?.assets &&
           mutate({
             name: res.assets[0].fileName,
@@ -58,6 +55,7 @@ const ImagePickModal = ({toggle, setToggle, mode}: props) => {
           });
       });
     }
+    setToggle(!toggle);
   };
 
   const Container = styled.Pressable`

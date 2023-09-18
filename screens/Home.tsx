@@ -69,7 +69,7 @@ const Home = ({
         CameraModule.getOption(JSON.parse(value).id);
         if (JSON.parse(value).id >= 0) {
           getOptionImage();
-      }
+        }
       }
     };
     getOption();
@@ -86,14 +86,14 @@ const Home = ({
     })();
   }, []);
 
-  if (cameraPermission !== 'authorized') {
+  if (cameraPermission === 'denied') {
     return (
       <Container>
         <Text>카메라 권한이 없습니다.</Text>
       </Container>
     );
   }
-  if (microphonePermissionsion !== 'authorized') {
+  if (microphonePermissionsion === 'denied') {
     return (
       <Container>
         <Text>마이크 권한이 없습니다.</Text>
