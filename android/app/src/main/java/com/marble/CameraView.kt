@@ -8,13 +8,11 @@ import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.YuvImage
-import android.hardware.camera2.CameraCharacteristics
-import android.media.Image
+import kotlinx.coroutines.*
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Base64
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -23,10 +21,6 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.camera.camera2.interop.Camera2CameraInfo
-import androidx.camera.camera2.interop.ExperimentalCamera2Interop
-import androidx.camera.core.CameraSelector
-import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -59,11 +53,8 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
-import kotlin.math.ceil
 
 class CameraView : FrameLayout, LifecycleOwner {
-    val TAG = "CameraView"
-
     private lateinit var context: ThemedReactContext
 
     private lateinit var lifecycleRegistry : LifecycleRegistry
@@ -74,9 +65,8 @@ class CameraView : FrameLayout, LifecycleOwner {
     private var lensFacing = Facing.BACK
     private lateinit var binding: CameraViewBinding
     private lateinit var camera : CameraView
-    private var imageProcessor: VisionImageProcessor? = null
-    private var faceGraphic :FaceGraphic? =null
     private var newBitmap: Bitmap? = null
+    private var isApiCallScheduled = true
 
 
     constructor(context: ThemedReactContext) : super(context) {
@@ -111,7 +101,6 @@ class CameraView : FrameLayout, LifecycleOwner {
 
         galleryBtn=layout.findViewById<ImageButton>(R.id.gallery_button)
         galleryBtn.setOnClickListener{
-            var targetUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("content://media/internal/images/media"))
             (context.currentActivity)?.startActivityForResult(intent, 200)
 
@@ -140,13 +129,10 @@ class CameraView : FrameLayout, LifecycleOwner {
             .build()
         val detector = FaceDetection.getClient(faceDetectorOptions)
         var faceIdList = setOf<Number>()
-        var frameCount=0;
 
         camera.addFrameProcessor(object :FrameProcessor{
-            private var lastTime = System.currentTimeMillis()
             @RequiresApi(Build.VERSION_CODES.Q)
             override fun process(frame: Frame) {
-                //frameCount++
                 if (frame.format == ImageFormat.NV21
                     && frame.dataClass == ByteArray::class.java) {
                     val data = frame.getData<ByteArray>()
@@ -183,12 +169,9 @@ class CameraView : FrameLayout, LifecycleOwner {
                    }
                     try{
                         newBitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.width,bitmap.height,matrix,true)
-                        Log.d(TAG,"${getBase64String(newBitmap!!)}")
-                        Log.d(TAG,"detect 시작,${newBitmap}")
-                            Tasks.await(detector.process(image)
+                        Tasks.await(detector.process(image)
                             .addOnSuccessListener { faces ->
                                 graphicOverlay!!.clear()
-                                //var faceList = arrayListOf<Map<String, Any>>()
                                 var faceList = JSONArray()
                                 var faceBitmapList = mutableMapOf<Number,Bitmap>()
 
@@ -216,25 +199,10 @@ class CameraView : FrameLayout, LifecycleOwner {
                                     if(w>0 && h>0){
                                         val faceBitmap = Bitmap.createBitmap(newBitmap!!,left,top,w,h)
                                         val image = getBase64String(faceBitmap)
-                                        Log.d(TAG,"${image}")
                                         val jsonObject = JSONObject()
                                         jsonObject.put("id",face.trackingId)
                                         jsonObject.put("image",image)
                                         faceList.put(jsonObject)
-
-                                        //얼굴 그리기
-//                                        if(!faceIdList.contains(face.trackingId!!.toInt())){
-//                                            try{
-//                                                graphicOverlay?.add(FaceGraphic(graphicOverlay,
-//                                                    face,
-//                                                    faceBitmap,context))
-//                                            }catch(e:Exception){
-//                                                Log.d(TAG,"$e")
-//                                            }
-//                                        }else{
-//                                            Log.d(TAG,"제외,${face.trackingId}")
-//                                        }
-
                                         faceBitmapList[face.trackingId!!]= faceBitmap
 
                                     }else{
@@ -244,35 +212,55 @@ class CameraView : FrameLayout, LifecycleOwner {
                                 }
 
                                 //api 호출
-                                if(faceList.length()!=0){
-                                    Log.d(TAG,"$faceList")
-                                    val call = ApiObject.getRetrofitService.getFaceId(faceList)
-                                    call.enqueue(object : Callback<FaceId> {
-                                        override fun onResponse(
-                                            call: retrofit2.Call<FaceId>,
-                                            response: Response<FaceId>
-                                        ) {
-                                            if(response.isSuccessful) {
-                                                var result= response.body()!!.id_list ?: listOf()
-                                                result = result.mapNotNull { it.toString().toIntOrNull() }
-                                                faceIdList += result.toSet()
+                                if(faceList.length()!=0) {
+                                    if (isApiCallScheduled) {
+                                        isApiCallScheduled=false
 
-                                                Log.d(TAG,"list: $faceIdList")
-                                                Log.d(TAG,"response: ${response.body()}")
+                                        Log.d(TAG, "api:$faceList")
+                                        CoroutineScope(Dispatchers.Default).launch {
+                                            val call =
+                                                ApiObject.getRetrofitService.getFaceId(faceList)
+                                            call.enqueue(object : Callback<FaceId> {
+                                                override fun onResponse(
+                                                    call: retrofit2.Call<FaceId>,
+                                                    response: Response<FaceId>
+                                                ) {
+                                                    if (response.isSuccessful) {
+                                                        var result =
+                                                            response.body()!!.id_list ?: listOf()
+                                                        result = result.mapNotNull {
+                                                            it.toString().toIntOrNull()
+                                                        }
+                                                        faceIdList += result.toSet()
 
-                                            }else{
-                                                Log.d(TAG,"리스폰스: ${response.code()}")
-                                            }
+                                                        Log.d(TAG, "list: $faceIdList")
+                                                        Log.d(TAG, "response: ${response.code()}")
+
+                                                    } else {
+                                                        Log.d(
+                                                            TAG,
+                                                            "response error: ${response.code()}"
+                                                        )
+                                                    }
+
+                                                }
+
+                                                override fun onFailure(
+                                                    call: retrofit2.Call<FaceId>,
+                                                    t: Throwable
+                                                ) {
+                                                    Log.e(TAG, "${t.printStackTrace()}")
+                                                }
+                                            })
+                                            delay(1000)
+                                            isApiCallScheduled=true
                                         }
-                                        override fun onFailure(call: retrofit2.Call<FaceId>, t: Throwable) {
-                                            Log.e(TAG,"${t.printStackTrace()}")
-                                        }
-                                    })
+
+
                                 }
-
+}
                                 //얼굴 모자이크 하기
                                 for(face in faces){
-                                    Log.d(TAG,"그리기:${faceIdList},${face.trackingId!!},${faceIdList.contains(face.trackingId!!.toInt())}")
                                     if(!faceIdList.contains(face.trackingId!!.toInt())){
                                         try{
                                             graphicOverlay?.add(FaceGraphic(graphicOverlay,
@@ -297,7 +285,6 @@ class CameraView : FrameLayout, LifecycleOwner {
                         Log.e(TAG,"error $e")
                     }
 
-                    frameCount=0
                 }else{
                     Log.d(TAG,"프레임 형식이 맞지 않습니다.")
                 }
